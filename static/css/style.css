@@ -1,0 +1,39 @@
+/* 카드 호버 효과 */
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* 가격 색상 */
+.price {
+    color: #1a6ef5;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+/* 네비바 */
+.navbar {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* 왼쪽 사이드바 브랜드 hover */
+.brand-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+body {
+    background-color: #f5f6f8;
+}
+
+.card-body {
+    padding: 16px;
+}
