@@ -2,83 +2,178 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>{{ car.model }} - CarMarket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ car.model }} – CarMarket</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-    <nav class="navbar navbar-light bg-white border-bottom px-4">
-        <a href="/" class="navbar-brand fw-bold fs-4 text-decoration-none">🚗 CarMarket</a>
-    </nav>
+<!-- ── 네비게이션 바 ──────────────────────────── -->
+<nav class="navbar">
+    <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
+    <a href="javascript:history.back()"
+       style="font-size:0.88rem; color:var(--gray-500); font-weight:600;">
+        ← 목록으로
+    </a>
+</nav>
 
-    <div class="container mt-4">
-        <div class="row g-4">
+<div class="container" style="max-width:1100px; padding: 2rem 1.5rem 4rem;">
 
-            <!-- 왼쪽: 사진 + 기본 정보 -->
-            <div class="col-6">
-                {% if car.photo_url %}
-                <img src="{{ car.photo_url }}" class="w-100 rounded-3" style="height:320px; object-fit:cover;">
-                {% endif %}
+    <div class="row g-4">
 
-                <div class="card mt-3 p-4">
-                    <h5 class="fw-bold">{{ car.model }}</h5>
-                    <p class="text-muted mb-3">{{ car.badge }}</p>
-                    <h4 class="text-primary fw-bold mb-4">{{ "{:,}".format(car.price) }}만원</h4>
+        <!-- ── 왼쪽: 사진 + 기본 정보 ─────────── -->
+        <div class="col-12 col-lg-6">
 
-                    <table class="table table-borderless">
-                        <tr><td class="text-muted">연식</td><td class="fw-bold">{{ car.year }}년</td></tr>
-                        <tr><td class="text-muted">주행거리</td><td class="fw-bold">{{ "{:,}".format(car.mileage) }}km</td></tr>
-                        <tr><td class="text-muted">연료</td><td class="fw-bold">{{ car.fuel_type }}</td></tr>
-                        <tr><td class="text-muted">지역</td><td class="fw-bold">{{ car.region }}</td></tr>
-                        <tr><td class="text-muted">국산/수입</td><td class="fw-bold">{{ car.car_type }}</td></tr>
-                    </table>
-
-                    <a href="https://www.encar.com/md/car/index.do?carid={{ car.id }}"
-                       target="_blank" class="btn btn-dark w-100 mt-2">
-                        엔카에서 보기 →
-                    </a>
-                </div>
+            <!-- 차량 사진 -->
+            {% if car.photo_url %}
+            <img src="{{ car.photo_url }}"
+                 alt="{{ car.model }}"
+                 class="detail-img">
+            {% else %}
+            <div class="detail-img d-flex align-items-center justify-content-center"
+                 style="background:var(--gray-100); font-size:4rem; color:var(--gray-400);">
+                🚗
             </div>
+            {% endif %}
 
-            <!-- 오른쪽: 시세 차트 -->
-            <div class="col-6">
-                <div class="card p-4 h-100">
-                    <h6 class="fw-bold mb-3">📊 {{ car.model }} 연식별 평균 시세</h6>
+            <!-- 기본 정보 카드 -->
+            <div class="detail-card mt-3">
+                <p class="detail-badge">{{ car.badge }}</p>
+                <h1 class="detail-model">{{ car.model }}</h1>
+                <p class="detail-price">{{ "{:,}".format(car.price) }}만원</p>
+
+                <table class="detail-table w-100">
+                    <tr>
+                        <td>연식</td>
+                        <td>{{ car.year }}년</td>
+                    </tr>
+                    <tr>
+                        <td>주행거리</td>
+                        <td>{{ "{:,}".format(car.mileage) }}km</td>
+                    </tr>
+                    <tr>
+                        <td>연료</td>
+                        <td>{{ car.fuel_type }}</td>
+                    </tr>
+                    <tr>
+                        <td>지역</td>
+                        <td>{{ car.region }}</td>
+                    </tr>
+                    <tr>
+                        <td>구분</td>
+                        <td>{{ car.car_type }}</td>
+                    </tr>
+                </table>
+
+                <a href="https://fem.encar.com/cars/detail/{{ car.id }}"
+                   target="_blank"
+                   class="btn-encar-full">
+                    엔카에서 원문 보기 →
+                </a>
+            </div>
+        </div>
+
+        <!-- ── 오른쪽: 시세 차트 ──────────────── -->
+        <div class="col-12 col-lg-6">
+            <div class="detail-card h-100 d-flex flex-column">
+                <div class="mb-3">
+                    <p class="sidebar-title mb-1">시세 분석</p>
+                    <h6 class="fw-bold" style="font-size:1rem; letter-spacing:-0.2px;">
+                        📊 {{ car.model }} 연식별 평균 시세
+                    </h6>
+                </div>
+                <div style="flex:1; min-height:280px;">
                     <canvas id="priceChart"></canvas>
                 </div>
+
+                <!-- 시세 요약 -->
+                <div class="mt-4 pt-3" style="border-top: 1px solid var(--gray-100);">
+                    <div class="row g-3 text-center">
+                        <div class="col-4">
+                            <p class="sidebar-title mb-1">최저가</p>
+                            <p class="fw-bold" style="color:var(--blue-600); font-size:0.95rem;">
+                                {{ "{:,}".format(chart_data | map(attribute='avg_price') | min | int) }}만원
+                            </p>
+                        </div>
+                        <div class="col-4">
+                            <p class="sidebar-title mb-1">이 차량</p>
+                            <p class="fw-bold" style="color:var(--gray-900); font-size:0.95rem;">
+                                {{ "{:,}".format(car.price) }}만원
+                            </p>
+                        </div>
+                        <div class="col-4">
+                            <p class="sidebar-title mb-1">최고가</p>
+                            <p class="fw-bold" style="color:var(--gray-500); font-size:0.95rem;">
+                                {{ "{:,}".format(chart_data | map(attribute='avg_price') | max | int) }}만원
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-
         </div>
+
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const labels = {{ chart_data | map(attribute='year') | list | tojson }};
-        const data = {{ chart_data | map(attribute='avg_price') | list | tojson }};
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = {{ chart_data | map(attribute='year') | list | tojson }};
+    const data   = {{ chart_data | map(attribute='avg_price') | list | tojson }};
 
-        new Chart(document.getElementById('priceChart'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: '평균 시세 (만원)',
-                    data: data,
-                    borderColor: '#1a6ef5',
-                    backgroundColor: 'rgba(26,110,245,0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
+    new Chart(document.getElementById('priceChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: '평균 시세 (만원)',
+                data,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37,99,235,0.08)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#2563eb',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#111827',
+                    titleColor: '#9ca3af',
+                    bodyColor: '#fff',
+                    bodyFont: { weight: 'bold', size: 14 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => `  ${ctx.parsed.y.toLocaleString()}만원`
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: false }
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 12 }, color: '#9ca3af' }
+                },
+                y: {
+                    beginAtZero: false,
+                    grid: { color: '#f3f4f6' },
+                    ticks: {
+                        font: { size: 12 },
+                        color: '#9ca3af',
+                        callback: v => v.toLocaleString() + '만'
+                    }
                 }
             }
-        });
-    </script>
+        }
+    });
+</script>
 
 </body>
 </html>

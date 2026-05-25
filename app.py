@@ -17,18 +17,30 @@ def get_db():
 
 @app.route('/')
 def index():
+    car_type = request.args.get('car_type', '')
+
     conn = get_db()
     with conn.cursor() as cur:
-        # 브랜드별 매물 수 가져오기
-        cur.execute("""
-            SELECT manufacturer, COUNT(*) as count
-            FROM cars
-            GROUP BY manufacturer
-            ORDER BY count DESC
-        """)
+        if car_type:
+            cur.execute("""
+                SELECT manufacturer, COUNT(*) as count
+                FROM cars
+                WHERE car_type = %s
+                GROUP BY manufacturer
+                ORDER BY count DESC
+            """, (car_type,))
+        else:
+            cur.execute("""
+                SELECT manufacturer, COUNT(*) as count
+                FROM cars
+                GROUP BY manufacturer
+                ORDER BY count DESC
+            """)
         brands = cur.fetchall()
     conn.close()
-    return render_template('index.html', brands=brands)
+
+    return render_template('index.html', brands=brands, car_type=car_type)
+
 
 
 
@@ -44,7 +56,6 @@ def car_list():
     per_page = 60
     offset = (page - 1) * per_page
 
-    # 조건을 동적으로 조립
     conditions = ['price > 50']
     params = []
 
@@ -71,19 +82,17 @@ def car_list():
 
     conn = get_db()
     with conn.cursor() as cur:
-        # 전체 건수
         cur.execute(f'SELECT COUNT(*) as total FROM cars {where}', params)
         total = cur.fetchone()['total']
 
-        # 실제 데이터
-        params_with_limit = params + [per_page, offset]
         cur.execute(f"""
             SELECT id, manufacturer, model, badge, fuel_type, year, mileage, price, region, photo_url
             FROM cars {where}
             ORDER BY price ASC
             LIMIT %s OFFSET %s
-        """, params_with_limit)
+        """, params + [per_page, offset])
         cars = cur.fetchall()
+        print(f"cars 개수: {len(cars)}")
     conn.close()
 
     total_pages = (total + per_page - 1) // per_page
@@ -92,6 +101,7 @@ def car_list():
                            total=total, page=page, total_pages=total_pages,
                            fuel_type=fuel_type, year_min=year_min, year_max=year_max,
                            price_min=price_min, price_max=price_max)
+
 
 
 @app.route('/car/<car_id>')

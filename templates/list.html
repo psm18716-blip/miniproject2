@@ -2,60 +2,164 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>{{ manufacturer }} - CarMarket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ manufacturer }} – CarMarket</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-    <nav class="navbar navbar-light bg-white border-bottom px-4">
-        <a href="/" class="navbar-brand fw-bold fs-4 text-decoration-none">🚗 CarMarket</a>
-    </nav>
+<!-- ── 네비게이션 바 ──────────────────────────── -->
+<nav class="navbar">
+    <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
+</nav>
 
-    <div class="container-fluid mt-4">
-        <div class="row">
+<div class="container-fluid" style="max-width:1400px; padding:0;">
+    <div class="row g-0" style="min-height: calc(100vh - 60px);">
 
-            <!-- 왼쪽 필터 사이드바 -->
-            <div class="col-2 border-end pe-4">
+        <!-- ── 필터 사이드바 ──────────────────── -->
+        <div class="col-auto" style="width:220px;">
+            <div class="sidebar">
                 <form method="GET" action="/list">
                     <input type="hidden" name="manufacturer" value="{{ manufacturer }}">
 
-                    <h6 class="fw-bold mb-3">연식</h6>
-                    <div class="d-flex gap-2 mb-4">
-                        <input type="number" name="year_min" class="form-control form-control-sm" placeholder="최소" value="{{ year_min }}">
-                        <input type="number" name="year_max" class="form-control form-control-sm" placeholder="최대" value="{{ year_max }}">
+                    <!-- 연식 -->
+                    <div class="filter-section">
+                        <span class="filter-label">연식</span>
+                        <div class="d-flex gap-2">
+                            <input type="number" name="year_min"
+                                   class="form-control form-control-sm"
+                                   placeholder="최소" value="{{ year_min }}">
+                            <input type="number" name="year_max"
+                                   class="form-control form-control-sm"
+                                   placeholder="최대" value="{{ year_max }}">
+                        </div>
                     </div>
 
-                    <h6 class="fw-bold mb-3">가격 (만원)</h6>
-                    <div class="d-flex gap-2 mb-4">
-                        <input type="number" name="price_min" class="form-control form-control-sm" placeholder="최소" value="{{ price_min }}">
-                        <input type="number" name="price_max" class="form-control form-control-sm" placeholder="최대" value="{{ price_max }}">
+                    <!-- 가격 -->
+                    <div class="filter-section">
+                        <span class="filter-label">가격 (만원)</span>
+                        <div class="d-flex gap-2">
+                            <input type="number" name="price_min"
+                                   class="form-control form-control-sm"
+                                   placeholder="최소" value="{{ price_min }}">
+                            <input type="number" name="price_max"
+                                   class="form-control form-control-sm"
+                                   placeholder="최대" value="{{ price_max }}">
+                        </div>
                     </div>
 
-                    <h6 class="fw-bold mb-3">연료</h6>
-                    <div class="mb-4">
+                    <!-- 연료 -->
+                    <div class="filter-section">
+                        <span class="filter-label">연료</span>
                         {% for fuel in ['가솔린', '디젤', '전기', 'LPG(일반인 구입)', '가솔린+전기'] %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="fuel_type"
-                                   value="{{ fuel }}" id="fuel_{{ loop.index }}"
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="radio"
+                                   name="fuel_type" value="{{ fuel }}"
+                                   id="fuel_{{ loop.index }}"
                                    {{ 'checked' if fuel_type == fuel }}>
-                            <label class="form-check-label" for="fuel_{{ loop.index }}">{{ fuel }}</label>
+                            <label class="form-check-label" for="fuel_{{ loop.index }}">
+                                {{ fuel }}
+                            </label>
                         </div>
                         {% endfor %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="fuel_type"
-                                   value="" {{ 'checked' if not fuel_type }}>
-                            <label class="form-check-label">전체</label>
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="radio"
+                                   name="fuel_type" value=""
+                                   id="fuel_all"
+                                   {{ 'checked' if not fuel_type }}>
+                            <label class="form-check-label" for="fuel_all">전체</label>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-dark w-100">검색</button>
-                    <a href="/list?manufacturer={{ manufacturer }}" class="btn btn-outline-secondary w-100 mt-2">초기화</a>
+                    <button type="submit" class="btn-search">검색</button>
+                    <a href="/list?manufacturer={{ manufacturer }}"
+                       class="btn-reset d-block text-center">초기화</a>
                 </form>
             </div>
+        </div>
 
-            <!-- 오른쪽 매물 목록 -->
-            <div class="col-10 ps-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold mb-0">{{ manufacturer }} <span class="text-muted fs-6">총 {{ "{:,}".format(total) }}대</span></h5>
+        <!-- ── 매물 목록 ───────────────────────── -->
+        <div class="col" style="padding: 2rem 2rem 3rem;">
+
+            <!-- 헤더 -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h5 class="fw-bold mb-0" style="font-size:1.2rem; letter-spacing:-0.3px;">
+                        {{ manufacturer }}
+                    </h5>
+                    <p class="result-count mb-0 mt-1">
+                        총 <strong>{{ "{:,}".format(total) }}</strong>대
+                    </p>
                 </div>
+            </div>
+
+            <!-- 카드 그리드 -->
+            <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
+                {% for car in cars %}
+                <div class="col">
+                    <div class="car-card">
+                        <div class="car-card-img-wrap">
+                            {% if car.photo_url %}
+                            <img src="{{ car.photo_url }}" alt="{{ car.model }}">
+                            {% else %}
+                            <div class="car-card-img-placeholder">🚗</div>
+                            {% endif %}
+                            <span class="fuel-badge">{{ car.fuel_type }}</span>
+                        </div>
+
+                        <div class="car-card-body">
+                            <p class="car-meta">
+                                {{ car.year }}년 &middot; {{ "{:,}".format(car.mileage) }}km
+                            </p>
+                            <p class="car-title">{{ car.model }}</p>
+                            <p class="car-badge-text">{{ car.badge }}</p>
+                            <p class="price">{{ "{:,}".format(car.price) }}만원</p>
+                            <p class="car-region">📍 {{ car.region }}</p>
+
+                            <div class="card-btn-group">
+                                <a href="/car/{{ car.id }}" class="btn-detail">상세보기</a>
+                                <a href="https://fem.encar.com/cars/detail/{{ car.id }}"
+                                   target="_blank" class="btn-encar">엔카</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- 페이지네이션 -->
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center flex-wrap gap-1">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?manufacturer={{ manufacturer }}&page={{ page-1 }}&fuel_type={{ fuel_type }}&year_min={{ year_min }}&year_max={{ year_max }}&price_min={{ price_min }}&price_max={{ price_max }}">
+                            ← 이전
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+                    <li class="page-item {{ 'active' if p == page }}">
+                        <a class="page-link" href="?manufacturer={{ manufacturer }}&page={{ p }}&fuel_type={{ fuel_type }}&year_min={{ year_min }}&year_max={{ year_max }}&price_min={{ price_min }}&price_max={{ price_max }}">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?manufacturer={{ manufacturer }}&page={{ page+1 }}&fuel_type={{ fuel_type }}&year_min={{ year_min }}&year_max={{ year_max }}&price_min={{ price_min }}&price_max={{ price_max }}">
+                            다음 →
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

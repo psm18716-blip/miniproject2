@@ -2,57 +2,299 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>중고차 시세 분석</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarMarket – 중고차 시세 분석</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .hero {
+            background: #0f172a;
+            padding: 3rem 2rem 2.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: -100px; right: -60px;
+            width: 380px; height: 380px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37,99,235,.3), transparent 70%);
+            pointer-events: none;
+        }
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(37,99,235,.2);
+            border: 1px solid rgba(59,130,246,.35);
+            color: #93c5fd;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 4px 13px;
+            border-radius: 999px;
+            margin-bottom: 1.1rem;
+        }
+        .hero-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1.2px;
+            line-height: 1.25;
+            margin-bottom: 8px;
+        }
+        .hero-title span { color: #60a5fa; }
+        .hero-sub {
+            font-size: 0.92rem;
+            color: #94a3b8;
+            margin-bottom: 1.75rem;
+        }
+        .search-bar {
+            display: flex;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 520px;
+            margin: 0 auto;
+            box-shadow: 0 8px 28px rgba(0,0,0,.35);
+        }
+        .search-bar input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 15px 18px;
+            font-size: 0.93rem;
+            font-family: 'Pretendard', sans-serif;
+            color: #111;
+        }
+        .search-bar input::placeholder { color: #9ca3af; }
+        .search-bar button {
+            background: #2563eb;
+            border: none;
+            color: #fff;
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 0 24px;
+            cursor: pointer;
+            transition: background .2s;
+            font-family: 'Pretendard', sans-serif;
+        }
+        .search-bar button:hover { background: #1d4ed8; }
+
+        /* 통계 바 */
+        .stats-bar {
+            background: #fff;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: center;
+        }
+        .stat-item {
+            flex: 1;
+            max-width: 160px;
+            text-align: center;
+            padding: 1rem .5rem;
+            border-right: 1px solid var(--gray-200);
+        }
+        .stat-item:last-child { border-right: none; }
+        .stat-num {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--blue-600);
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.73rem;
+            color: var(--gray-400);
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        /* 빈 상태 안내 */
+        .brand-prompt {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray-400);
+        }
+        .brand-prompt .icon { font-size: 3rem; margin-bottom: 1rem; }
+        .brand-prompt h6 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+        }
+        .brand-prompt p { font-size: 0.88rem; }
+
+        /* 빠른 접근 카드 */
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .quick-card {
+            background: #fff;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 1.2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+        }
+        .quick-card:hover {
+            border-color: var(--blue-500);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(37,99,235,.12);
+        }
+        .quick-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--blue-50);
+            color: var(--blue-600);
+            font-size: 1.15rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            border: 1.5px solid var(--blue-100);
+            transition: all .2s;
+        }
+        .quick-card:hover .quick-avatar {
+            background: var(--blue-600);
+            color: #fff;
+        }
+        .quick-name {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+        }
+        .quick-cnt {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--blue-600);
+            background: var(--blue-50);
+            padding: 2px 10px;
+            border-radius: 999px;
+            display: inline-block;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- 네비게이션 바 -->
-    <nav class="navbar navbar-light bg-white border-bottom px-4">
-        <span class="navbar-brand fw-bold fs-4">🚗 CarMarket</span>
-        <div>
-            <a href="/?car_type=전체" class="btn btn-sm btn-outline-secondary me-1">전체</a>
-            <a href="/?car_type=국산" class="btn btn-sm btn-outline-secondary me-1">국산</a>
-            <a href="/?car_type=수입" class="btn btn-sm btn-outline-secondary">수입</a>
+<!-- ── 네비게이션 바 ──────────────────────────── -->
+<nav class="navbar">
+    <span class="navbar-brand" style="color:#111;">🚗 Car<span style="color:#2563eb;">Market</span></span>
+    <div class="nav-tab-group">
+        <a href="/" class="nav-tab {{ 'active' if not car_type }}">전체</a>
+        <a href="/?car_type=국산" class="nav-tab {{ 'active' if car_type == '국산' }}">국산</a>
+        <a href="/?car_type=수입" class="nav-tab {{ 'active' if car_type == '수입' }}">수입</a>
+    </div>
+</nav>
+
+<!-- ── 히어로 ─────────────────────────────────── -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-eyebrow">🔥 실시간 시세 분석</div>
+        <h1 class="hero-title">내 차의 <span>진짜 시세</span>,<br>지금 바로 확인하세요</h1>
+        <p class="hero-sub">엔카 데이터 기반 · 실시간 업데이트 · 연식별 시세 차트</p>
+        <div class="search-bar">
+            <input type="text" placeholder="브랜드, 모델명으로 검색 (예: 아반떼, BMW 5시리즈)" id="heroSearch">
+            <button onclick="doSearch()">검색 →</button>
         </div>
-    </nav>
+    </div>
+</section>
 
-    <div class="container-fluid mt-4">
-        <div class="row">
+<!-- ── 통계 바 ─────────────────────────────────── -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-num">{{ "{:,}".format(brands | sum(attribute='count') | int) }}</div>
+        <div class="stat-label">총 매물 수</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-num">{{ brands | length }}</div>
+        <div class="stat-label">브랜드</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-num">실시간</div>
+        <div class="stat-label">데이터 업데이트</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-num">무료</div>
+        <div class="stat-label">이용 요금</div>
+    </div>
+</div>
 
-            <!-- 왼쪽 브랜드 필터 -->
-            <div class="col-2 border-end">
-                <h6 class="fw-bold mb-3">브랜드 · 모델</h6>
+<!-- ── 레이아웃 ───────────────────────────────── -->
+<div class="container-fluid" style="max-width:1400px; padding:0;">
+    <div class="row g-0">
+
+        <!-- 왼쪽 사이드바 -->
+        <div class="col-auto" style="width:210px;">
+            <div class="sidebar">
+                <p class="sidebar-title">브랜드 · 모델</p>
                 {% for brand in brands %}
-                <div class="d-flex justify-content-between py-1">
-                    <a href="/list?manufacturer={{ brand.manufacturer }}" class="text-decoration-none text-dark">
-                        {{ brand.manufacturer }}
-                    </a>
-                    <span class="text-primary">{{ brand.count }}</span>
-                </div>
+                <a href="/list?manufacturer={{ brand.manufacturer }}" class="brand-item">
+                    <span>{{ brand.manufacturer }}</span>
+                    <span class="brand-count">{{ brand.count }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 오른쪽 메인 -->
+        <div class="col" style="padding: 2.5rem 2rem 3rem;">
+
+            <!-- 인기 브랜드 빠른 접근 (TOP 8) -->
+            <p class="sidebar-title mb-3">빠른 접근 · 인기 브랜드</p>
+            <div class="quick-grid">
+                {% for brand in brands[:8] %}
+                <a href="/list?manufacturer={{ brand.manufacturer }}" class="quick-card">
+                    <div class="quick-avatar">{{ brand.manufacturer[0] }}</div>
+                    <div class="quick-name">{{ brand.manufacturer }}</div>
+                    <div class="quick-cnt">{{ "{:,}".format(brand.count) }}대</div>
+                </a>
                 {% endfor %}
             </div>
 
-            <!-- 오른쪽 메인 영역 -->
-            <div class="col-10">
-                <h5 class="fw-bold mb-4">인기 브랜드</h5>
-                <div class="row row-cols-4 g-3">
-                    {% for brand in brands[:8] %}
-                    <div class="col">
-                        <a href="/list?manufacturer={{ brand.manufacturer }}" class="text-decoration-none">
-                            <div class="card text-center p-3 h-100">
-                                <div class="fw-bold">{{ brand.manufacturer }}</div>
-                                <div class="text-primary">{{ brand.count }}대</div>
-                            </div>
-                        </a>
-                    </div>
-                    {% endfor %}
-                </div>
+            <!-- 브랜드 미선택 안내 -->
+            <div class="brand-prompt mt-5">
+                <div class="icon">👈</div>
+                <h6>왼쪽에서 브랜드를 선택하세요</h6>
+                <p>원하는 브랜드를 클릭하면<br>해당 브랜드의 매물 목록으로 이동합니다.</p>
             </div>
 
         </div>
     </div>
+</div>
+
+<script>
+function doSearch() {
+    const q = document.getElementById('heroSearch').value.trim();
+    if (q) location.href = '/list?manufacturer=' + encodeURIComponent(q);
+}
+document.getElementById('heroSearch').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+});
+</script>
 
 </body>
 </html>
