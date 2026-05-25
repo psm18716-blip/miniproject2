@@ -6,160 +6,807 @@
     <title>{{ manufacturer }} – CarMarket</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ── 레이아웃 ──────────────────────────── */
+        body { background: #f9fafb; }
+        .page-wrap { display:flex; min-height:calc(100vh - 60px); }
+
+        /* ── 왼쪽 사이드바 ─────────────────────── */
+        .left-sb {
+            width:220px; flex-shrink:0;
+            background:#fff; border-right:1px solid var(--gray-200);
+            position:sticky; top:60px; height:calc(100vh - 60px);
+            overflow-y:auto; scrollbar-width:none;
+            display:flex; flex-direction:column;
+        }
+        .left-sb::-webkit-scrollbar { display:none; }
+
+        /* 검색창 */
+        .sb-search-wrap {
+            padding:14px 12px 10px;
+            border-bottom:1px solid var(--gray-100);
+            flex-shrink:0;
+        }
+        .sb-search {
+            display:flex; align-items:center; gap:8px;
+            background:var(--gray-50); border:1.5px solid var(--gray-200);
+            border-radius:10px; padding:8px 12px;
+            transition:border-color .15s;
+        }
+        .sb-search:focus-within { border-color:var(--blue-500); background:#fff; }
+        .sb-search input {
+            flex:1; border:none; outline:none; background:transparent;
+            font-size:0.84rem; font-family:'Pretendard',sans-serif; color:#111;
+            min-width:0;
+        }
+        .sb-search input::placeholder { color:var(--gray-400); }
+        .sb-search-icon { color:var(--gray-400); font-size:0.9rem; flex-shrink:0; }
+
+        /* 브랜드 섹션 */
+        .sb-brands { padding:8px 10px 16px; flex:1; }
+        .sb-section-title {
+            font-size:0.72rem; font-weight:700; color:var(--gray-400);
+            letter-spacing:.06em; text-transform:uppercase;
+            padding:6px 4px 8px; display:block;
+        }
+        .sb-brand {
+            display:flex; align-items:center; gap:8px;
+            padding:7px 8px; border-radius:8px; cursor:pointer;
+            text-decoration:none; color:inherit; transition:background .12s;
+        }
+        .sb-brand:hover { background:var(--gray-50); }
+        .sb-brand.active { background:var(--blue-50); }
+        .sb-logo {
+            width:26px; height:26px; border-radius:7px;
+            background:var(--gray-100); overflow:hidden; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .sb-logo img { width:20px; height:20px; object-fit:contain; }
+        .sb-logo.fb { background:var(--blue-600); color:#fff; font-size:.65rem; font-weight:800; }
+        .sb-brand-name { font-size:.86rem; font-weight:600; color:var(--gray-700); flex:1; }
+        .sb-brand.active .sb-brand-name { color:var(--blue-600); font-weight:700; }
+        .sb-brand-cnt { font-size:.75rem; font-weight:700; color:var(--blue-500); }
+
+        /* ── 메인 영역 ─────────────────────────── */
+        .main-area { flex:1; min-width:0; }
+
+        /* ── 필터 바 ───────────────────────────── */
+        /* overflow: visible 이어야 드롭다운이 잘리지 않음 */
+        .filter-bar {
+            position:sticky; top:60px; z-index:90;
+            background:#fff; border-bottom:1px solid var(--gray-200);
+            padding:10px 1.5rem;
+        }
+        .filter-bar-inner {
+            display:flex; align-items:center; gap:7px;
+            overflow-x:auto; scrollbar-width:none;
+            /* overflow:auto여도 드롭다운은 fixed로 처리 */
+        }
+        .filter-bar-inner::-webkit-scrollbar { display:none; }
+
+        .filter-btn-all {
+            background:var(--gray-900); color:#fff; border:none;
+            border-radius:999px; font-size:.83rem; font-weight:700;
+            padding:7px 15px; white-space:nowrap; cursor:pointer; flex-shrink:0;
+            text-decoration:none; display:inline-flex; align-items:center; gap:5px;
+        }
+
+        .pill-wrap { position:relative; flex-shrink:0; }
+        .filter-pill {
+            display:inline-flex; align-items:center; gap:5px;
+            background:transparent; border:1.5px solid var(--gray-200);
+            border-radius:999px; font-size:.83rem; font-weight:600;
+            color:var(--gray-700); padding:6px 13px; white-space:nowrap;
+            cursor:pointer; transition:all .15s; font-family:'Pretendard',sans-serif;
+        }
+        .filter-pill:hover { border-color:var(--blue-400); color:var(--blue-600); }
+        .filter-pill.active {
+            border-color:var(--blue-600); background:var(--blue-600); color:#fff;
+        }
+        .filter-pill .chev { font-size:.65rem; opacity:.6; }
+        .filter-pill.active .chev { opacity:.8; }
+
+        /* 활성 필터 태그 */
+        .active-tags {
+            display:flex; flex-wrap:wrap; gap:6px;
+            padding:8px 1.5rem 0;
+        }
+        .active-tag {
+            display:inline-flex; align-items:center; gap:5px;
+            background:var(--blue-50); border:1px solid var(--blue-200);
+            color:var(--blue-700); font-size:.78rem; font-weight:700;
+            padding:4px 10px; border-radius:999px;
+        }
+        .active-tag button {
+            background:none; border:none; padding:0; cursor:pointer;
+            color:var(--blue-500); font-size:.85rem; line-height:1;
+            display:flex; align-items:center;
+        }
+        .active-tag button:hover { color:var(--blue-800); }
+
+        /* ── 드롭다운 패널 (fixed 포지션) ────────── */
+        .drop-panel {
+            display:none;
+            position:fixed; /* fixed로 필터 바 overflow와 무관하게 렌더 */
+            min-width:220px;
+            background:#fff; border:1.5px solid var(--gray-200);
+            border-radius:14px;
+            box-shadow:0 10px 32px rgba(0,0,0,.14);
+            z-index:9999;
+            padding:1rem 1.1rem 1.1rem;
+            animation:dropIn .14s ease;
+        }
+        .drop-panel.open { display:block; }
+        @keyframes dropIn {
+            from { opacity:0; transform:translateY(-6px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .drop-title {
+            font-size:.72rem; font-weight:700; color:var(--gray-400);
+            letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px;
+        }
+        .drop-range {
+            display:flex; align-items:center; gap:7px; margin-bottom:12px;
+        }
+        .drop-range input {
+            flex:1; min-width:0;
+            border:1.5px solid var(--gray-200); border-radius:8px;
+            padding:7px 10px; font-size:.84rem;
+            font-family:'Pretendard',sans-serif; outline:none;
+        }
+        .drop-range input:focus { border-color:var(--blue-500); }
+        .drop-range span { font-size:.8rem; color:var(--gray-400); flex-shrink:0; }
+        .drop-btns { display:flex; gap:7px; padding-top:10px; border-top:1px solid var(--gray-100); }
+        .drop-apply {
+            flex:1; background:var(--blue-600); color:#fff; border:none;
+            border-radius:8px; font-size:.83rem; font-weight:700; padding:8px;
+            cursor:pointer; font-family:'Pretendard',sans-serif;
+        }
+        .drop-apply:hover { background:var(--blue-700); }
+        .drop-reset {
+            padding:8px 12px; border:1.5px solid var(--gray-200); border-radius:8px;
+            font-size:.83rem; font-weight:600; color:var(--gray-500);
+            background:transparent; cursor:pointer; font-family:'Pretendard',sans-serif;
+            white-space:nowrap;
+        }
+        .drop-radio {
+            display:flex; align-items:center; gap:8px;
+            padding:6px 4px; border-radius:6px; cursor:pointer;
+            font-size:.87rem; font-weight:500; color:var(--gray-700);
+            transition:background .1s;
+        }
+        .drop-radio:hover { background:var(--gray-50); }
+        .drop-radio input { accent-color:var(--blue-600); cursor:pointer; }
+
+        /* 닫기 dimmer */
+        .drop-dimmer {
+            display:none; position:fixed; inset:0; z-index:9998;
+        }
+        .drop-dimmer.on { display:block; }
+
+        /* ── 결과 바 ───────────────────────────── */
+        .result-bar {
+            display:flex; align-items:center;
+            justify-content:space-between;
+            padding:12px 1.5rem 10px;
+        }
+        .result-left { display:flex; align-items:center; gap:10px; }
+        .result-cnt {
+            font-size:1rem; font-weight:800; color:var(--gray-900);
+            letter-spacing:-.3px;
+        }
+        .fav-toggle {
+            display:flex; align-items:center; gap:5px;
+            padding:6px 13px; border:1.5px solid var(--gray-200);
+            border-radius:999px; font-size:.82rem; font-weight:700;
+            color:var(--gray-500); background:#fff; cursor:pointer;
+            transition:all .15s; white-space:nowrap;
+        }
+        .fav-toggle:hover { border-color:#ef4444; color:#ef4444; }
+        .fav-toggle.on { border-color:#ef4444; background:#fef2f2; color:#ef4444; }
+        .fav-count {
+            background:#ef4444; color:#fff; font-size:.68rem; font-weight:800;
+            padding:1px 6px; border-radius:999px; min-width:16px; text-align:center;
+        }
+
+        .result-right { display:flex; align-items:center; gap:10px; }
+        .sort-select {
+            border:1.5px solid var(--gray-200); border-radius:8px;
+            font-size:.83rem; font-weight:600; color:var(--gray-700);
+            padding:6px 10px; background:#fff; cursor:pointer; outline:none;
+            font-family:'Pretendard',sans-serif;
+        }
+        .view-btns { display:flex; gap:3px; }
+        .vbtn {
+            width:30px; height:30px; border:1.5px solid var(--gray-200);
+            border-radius:7px; background:transparent; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            font-size:.85rem; color:var(--gray-400); transition:all .15s;
+        }
+        .vbtn.on { border-color:var(--gray-800); color:var(--gray-800); background:var(--gray-50); }
+
+        /* ── 카드 그리드 ────────────────────────── */
+        .car-grid {
+            display:grid; grid-template-columns:repeat(2,1fr);
+            gap:14px;                     /* 1px → 14px 여백 */
+            background:transparent;       /* 회색 배경 제거 */
+            border-top:none;
+            padding:14px 1.5rem 0;        /* 그리드 바깥 여백 */
+        }
+        .car-grid.g3 { grid-template-columns:repeat(3,1fr); }
+        .car-grid.g3 .hd-img  { height:160px; }
+        .car-grid.g3 .hd-model { font-size:.88rem; }
+        .car-grid.g3 .hd-price { font-size:1rem; }
+
+        /* ── 2열/3열 카드 ──────────────────────── */
+        .hd-card {
+            background:#fff; display:block; text-decoration:none;
+            color:inherit; cursor:pointer; transition:all .2s;
+            border-radius:14px;           /* 둥근 모서리 */
+            border:1.5px solid var(--gray-200);
+            overflow:hidden;
+        }
+        .hd-card:hover {
+            transform:translateY(-3px);
+            box-shadow:0 8px 24px rgba(0,0,0,.1);
+            border-color:transparent;
+        }
+        .hd-card.fav-hidden { display:none; }
+
+        .hd-img {
+            position:relative; width:100%; height:200px;
+            overflow:hidden;
+            background:#f5f5f5;           /* 연한 배경 */
+        }
+        .hd-img img {
+            width:100%; height:100%;
+            object-fit:contain;           /* cover → contain (차 전체 표시) */
+            object-position:center;
+            transition:transform .3s ease;
+            padding:8px 0;               /* 위아래 여백 */
+        }
+        .hd-card:hover .hd-img img { transform:scale(1.04); }
+
+        .like-btn {
+            position:absolute; top:10px; right:10px;
+            width:34px; height:34px; border-radius:50%;
+            background:rgba(255,255,255,.9); border:none;
+            font-size:1rem; cursor:pointer; display:flex;
+            align-items:center; justify-content:center;
+            transition:transform .15s; backdrop-filter:blur(4px);
+        }
+        .like-btn:hover { transform:scale(1.15); }
+        .like-btn.liked { color:#ef4444; }
+
+        .inner-thumb {
+            position:absolute; bottom:8px; right:8px;
+            width:64px; height:48px; border-radius:5px;
+            overflow:hidden; border:2px solid #fff;
+            box-shadow:0 2px 6px rgba(0,0,0,.2);
+        }
+        .inner-thumb img { width:100%; height:100%; object-fit:cover; }
+
+        .hd-body { padding:12px 14px 15px; }
+        .hd-model {
+            font-size:.95rem; font-weight:800; color:var(--gray-900);
+            letter-spacing:-.3px; margin-bottom:2px;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .hd-meta { font-size:.78rem; color:var(--gray-400); font-weight:500; margin-bottom:7px; }
+        .hd-price-row { display:flex; align-items:baseline; gap:7px; margin-bottom:7px; }
+        .hd-orig { font-size:.78rem; color:var(--gray-300); text-decoration:line-through; }
+        .hd-price { font-size:1.1rem; font-weight:800; color:var(--blue-600); letter-spacing:-.4px; }
+        .hd-tags { display:flex; flex-wrap:wrap; gap:4px; }
+        .hd-tag {
+            font-size:.72rem; font-weight:700; padding:2px 8px;
+            border-radius:5px; border:1px solid var(--gray-200); color:var(--gray-600);
+        }
+        .hd-tag.bl { border-color:var(--blue-100); color:var(--blue-600); background:var(--blue-50); }
+
+        /* ── 리스트 뷰 ──────────────────────────── */
+        .car-grid.list-view {
+            display:flex; flex-direction:column; gap:10px;
+            grid-template-columns:none; background:transparent;
+            padding:14px 1.5rem 0;
+        }
+        .car-grid.list-view .hd-card {
+            display:flex; align-items:center;
+            border-radius:12px; border:1.5px solid var(--gray-200);
+            overflow:hidden; padding:0;
+        }
+        .car-grid.list-view .hd-card:hover {
+            transform:translateY(-2px);
+            box-shadow:0 6px 18px rgba(0,0,0,.08);
+        }
+        .car-grid.list-view .hd-img {
+            width:160px; height:120px; flex-shrink:0;
+            border-radius:0; background:#f5f5f5;
+        }
+        .car-grid.list-view .hd-img img { padding:4px; }
+        .car-grid.list-view .hd-img .like-btn { top:6px; right:6px; width:28px; height:28px; font-size:.85rem; }
+        .car-grid.list-view .inner-thumb { display:none; }
+        .car-grid.list-view .hd-body {
+            flex:1; padding:14px 18px; display:flex;
+            flex-direction:column; justify-content:center;
+        }
+        .car-grid.list-view .hd-model { font-size:.95rem; white-space:normal; }
+        .car-grid.list-view .hd-price { font-size:1rem; }
+    </style>
 </head>
 <body>
 
 <!-- ── 네비게이션 바 ──────────────────────────── -->
-<nav class="navbar">
-    <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
+<nav class="navbar" style="padding:0 1.5rem;">
+    <a href="/" class="navbar-brand" style="color:#111;">🚗 Car<span style="color:#2563eb;">Market</span></a>
+    <span style="font-size:.95rem; font-weight:700; color:var(--gray-900);">{{ manufacturer }}</span>
+    <a href="javascript:history.back()"
+       style="font-size:.83rem; color:var(--gray-400); font-weight:600; text-decoration:none;">
+        ← 뒤로
+    </a>
 </nav>
 
-<div class="container-fluid" style="max-width:1400px; padding:0;">
-    <div class="row g-0" style="min-height: calc(100vh - 60px);">
+<!-- ── 투명 드롭다운 dimmer ──────────────────── -->
+<div class="drop-dimmer" id="dropDimmer" onclick="closeAllDrops()"></div>
 
-        <!-- ── 필터 사이드바 ──────────────────── -->
-        <div class="col-auto" style="width:220px;">
-            <div class="sidebar">
-                <form method="GET" action="/list">
-                    <input type="hidden" name="manufacturer" value="{{ manufacturer }}">
+<div class="page-wrap">
 
-                    <!-- 연식 -->
-                    <div class="filter-section">
-                        <span class="filter-label">연식</span>
-                        <div class="d-flex gap-2">
-                            <input type="number" name="year_min"
-                                   class="form-control form-control-sm"
-                                   placeholder="최소" value="{{ year_min }}">
-                            <input type="number" name="year_max"
-                                   class="form-control form-control-sm"
-                                   placeholder="최대" value="{{ year_max }}">
-                        </div>
-                    </div>
+    <!-- ── 왼쪽 사이드바 ──────────────────────── -->
+    <aside class="left-sb">
 
-                    <!-- 가격 -->
-                    <div class="filter-section">
-                        <span class="filter-label">가격 (만원)</span>
-                        <div class="d-flex gap-2">
-                            <input type="number" name="price_min"
-                                   class="form-control form-control-sm"
-                                   placeholder="최소" value="{{ price_min }}">
-                            <input type="number" name="price_max"
-                                   class="form-control form-control-sm"
-                                   placeholder="최대" value="{{ price_max }}">
-                        </div>
-                    </div>
-
-                    <!-- 연료 -->
-                    <div class="filter-section">
-                        <span class="filter-label">연료</span>
-                        {% for fuel in ['가솔린', '디젤', '전기', 'LPG(일반인 구입)', '가솔린+전기'] %}
-                        <div class="form-check mb-1">
-                            <input class="form-check-input" type="radio"
-                                   name="fuel_type" value="{{ fuel }}"
-                                   id="fuel_{{ loop.index }}"
-                                   {{ 'checked' if fuel_type == fuel }}>
-                            <label class="form-check-label" for="fuel_{{ loop.index }}">
-                                {{ fuel }}
-                            </label>
-                        </div>
-                        {% endfor %}
-                        <div class="form-check mb-1">
-                            <input class="form-check-input" type="radio"
-                                   name="fuel_type" value=""
-                                   id="fuel_all"
-                                   {{ 'checked' if not fuel_type }}>
-                            <label class="form-check-label" for="fuel_all">전체</label>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-search">검색</button>
-                    <a href="/list?manufacturer={{ manufacturer }}"
-                       class="btn-reset d-block text-center">초기화</a>
-                </form>
+        <!-- 검색창 -->
+        <div class="sb-search-wrap">
+            <div class="sb-search">
+                <span class="sb-search-icon">🔍</span>
+                <input type="text" placeholder="브랜드 검색..."
+                       id="sbSearchInput" oninput="filterBrands(this.value)">
             </div>
         </div>
 
-        <!-- ── 매물 목록 ───────────────────────── -->
-        <div class="col" style="padding: 2rem 2rem 3rem;">
+        <!-- 브랜드 목록 -->
+        <div class="sb-brands">
+            <span class="sb-section-title">브랜드 · 모델</span>
 
-            <!-- 헤더 -->
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <div>
-                    <h5 class="fw-bold mb-0" style="font-size:1.2rem; letter-spacing:-0.3px;">
-                        {{ manufacturer }}
-                    </h5>
-                    <p class="result-count mb-0 mt-1">
-                        총 <strong>{{ "{:,}".format(total) }}</strong>대
-                    </p>
+            {% set brand_domains = {
+                '현대':'hyundai.com','기아':'kia.com','제네시스':'genesis.com',
+                'BMW':'bmw.com','벤츠':'mercedes-benz.com','아우디':'audi.com',
+                '폭스바겐':'vw.com','쉐보레(GM대우)':'chevrolet.com',
+                'KG모빌리티(쌍용)':'kg-mobility.com','미니':'mini.com',
+                '랜드로버':'landrover.com','포르쉐':'porsche.com',
+                '렉서스':'lexus.com','테슬라':'tesla.com','볼보':'volvocars.com',
+                '혼다':'honda.com','도요타':'toyota.com','르노코리아(삼성)':'renault.com',
+                '링컨':'lincolnvehicles.com','캐딜락':'cadillac.com',
+                '마세라티':'maserati.com','페라리':'ferrari.com',
+                '람보르기니':'lamborghini.com','재규어':'jaguar.com',
+                '닛산':'nissan.com','포드':'ford.com','지프':'jeep.com'
+            } %}
+
+            <div id="brandList">
+            {% for brand in brands %}
+            {% set domain = brand_domains.get(brand.manufacturer, '') %}
+            <a href="/list?manufacturer={{ brand.manufacturer }}"
+               class="sb-brand {{ 'active' if brand.manufacturer == manufacturer }}"
+               data-name="{{ brand.manufacturer }}">
+                <div class="sb-logo">
+                    {% if domain %}
+                    <img src="https://www.google.com/s2/favicons?domain={{ domain }}&sz=64"
+                         alt="{{ brand.manufacturer }}"
+                         onerror="this.parentElement.classList.add('fb');this.remove();this.parentElement.textContent='{{ brand.manufacturer[:2] }}'">
+                    {% else %}
+                    <div class="fb" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;background:var(--blue-600);">{{ brand.manufacturer[:2] }}</div>
+                    {% endif %}
+                </div>
+                <span class="sb-brand-name">{{ brand.manufacturer }}</span>
+                <span class="sb-brand-cnt">{{ brand.count }}</span>
+            </a>
+            {% endfor %}
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── 메인 ──────────────────────────────── -->
+    <main class="main-area">
+
+        <!-- 필터 폼 -->
+        <form method="GET" action="/list" id="filterForm">
+        <input type="hidden" name="manufacturer" value="{{ manufacturer }}">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="q" value="{{ q or '' }}">
+
+        <!-- 필터 바 -->
+        <div class="filter-bar">
+            <div class="filter-bar-inner">
+
+                <!-- 전체 초기화 -->
+                <a href="/list?manufacturer={{ manufacturer }}"
+                   class="filter-btn-all" style="text-decoration:none;">
+                    전체 필터 ↺
+                </a>
+
+                <!-- 연식 -->
+                <div class="pill-wrap">
+                    <button type="button"
+                            class="filter-pill {{ 'active' if year_min or year_max }}"
+                            onclick="toggleDrop('dropYear', this)">
+                        연식{% if year_min and year_max %} ({{ year_min }}~{{ year_max }}){% elif year_min %} ({{ year_min }}~){% elif year_max %} (~{{ year_max }}){% endif %}
+                        <span class="chev">▾</span>
+                    </button>
+                </div>
+
+                <!-- 주행거리 -->
+                <div class="pill-wrap">
+                    <button type="button"
+                            class="filter-pill {{ 'active' if mileage_min or mileage_max }}"
+                            onclick="toggleDrop('dropMileage', this)">
+                        주행거리{% if mileage_min and mileage_max %} ({{ mileage_min }}~{{ mileage_max }}){% elif mileage_min %} ({{ mileage_min }}~){% elif mileage_max %} (~{{ mileage_max }}){% endif %}
+                        <span class="chev">▾</span>
+                    </button>
+                </div>
+
+                <!-- 가격 -->
+                <div class="pill-wrap">
+                    <button type="button"
+                            class="filter-pill {{ 'active' if price_min or price_max }}"
+                            onclick="toggleDrop('dropPrice', this)">
+                        가격{% if price_min and price_max %} ({{ price_min }}~{{ price_max }}만){% elif price_min %} ({{ price_min }}만~){% elif price_max %} (~{{ price_max }}만){% endif %}
+                        <span class="chev">▾</span>
+                    </button>
+                </div>
+
+                <!-- 연료 -->
+                <div class="pill-wrap">
+                    <button type="button"
+                            class="filter-pill {{ 'active' if fuel_type }}"
+                            onclick="toggleDrop('dropFuel', this)">
+                        {% if fuel_type %}{{ fuel_type }}{% else %}연료{% endif %}
+                        <span class="chev">▾</span>
+                    </button>
+                </div>
+
+                <!-- 차체 -->
+                <div class="pill-wrap">
+                    <button type="button"
+                            class="filter-pill"
+                            onclick="toggleDrop('dropBody', this)">
+                        차체 <span class="chev">▾</span>
+                    </button>
+                </div>
+
+            </div><!-- /.filter-bar-inner -->
+        </div><!-- /.filter-bar -->
+
+        <!-- 활성 필터 태그 -->
+        {% if year_min or year_max or price_min or price_max or fuel_type or mileage_min or mileage_max or q %}
+        <div class="active-tags">
+            {% if q %}
+            <span class="active-tag">
+                검색: {{ q }}
+                <button type="button" onclick="clearFilter('q')">✕</button>
+            </span>
+            {% endif %}
+            {% if year_min or year_max %}
+            <span class="active-tag">
+                연식: {{ year_min or '' }}~{{ year_max or '' }}
+                <button type="button" onclick="clearFilter('year_min','year_max')">✕</button>
+            </span>
+            {% endif %}
+            {% if mileage_min or mileage_max %}
+            <span class="active-tag">
+                주행거리: {{ mileage_min or '' }}~{{ mileage_max or '' }}km
+                <button type="button" onclick="clearFilter('mileage_min','mileage_max')">✕</button>
+            </span>
+            {% endif %}
+            {% if price_min or price_max %}
+            <span class="active-tag">
+                가격: {{ price_min or '' }}~{{ price_max or '' }}만원
+                <button type="button" onclick="clearFilter('price_min','price_max')">✕</button>
+            </span>
+            {% endif %}
+            {% if fuel_type %}
+            <span class="active-tag">
+                {{ fuel_type }}
+                <button type="button" onclick="clearFilter('fuel_type')">✕</button>
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- 드롭다운 패널들 (body 레벨 fixed 위치) -->
+        <!-- 연식 패널 -->
+        <div class="drop-panel" id="dropYear">
+            <div class="drop-title">연식</div>
+            <div class="drop-range">
+                <input type="number" name="year_min" placeholder="최소" value="{{ year_min }}" min="1990" max="2025">
+                <span>~</span>
+                <input type="number" name="year_max" placeholder="최대" value="{{ year_max }}" min="1990" max="2025">
+            </div>
+            <div class="drop-btns">
+                <button type="button" class="drop-reset" onclick="clearFields('year_min','year_max')">초기화</button>
+                <button type="submit" class="drop-apply">적용</button>
+            </div>
+        </div>
+
+        <!-- 주행거리 패널 -->
+        <div class="drop-panel" id="dropMileage">
+            <div class="drop-title">주행거리 (km)</div>
+            <div class="drop-range">
+                <input type="number" name="mileage_min" placeholder="최소 (예: 50000)" value="{{ mileage_min }}">
+                <span>~</span>
+                <input type="number" name="mileage_max" placeholder="최대 (예: 100000)" value="{{ mileage_max }}">
+            </div>
+            <div class="drop-btns">
+                <button type="button" class="drop-reset" onclick="clearFields('mileage_min','mileage_max')">초기화</button>
+                <button type="submit" class="drop-apply">적용</button>
+            </div>
+        </div>
+
+        <!-- 가격 패널 -->
+        <div class="drop-panel" id="dropPrice">
+            <div class="drop-title">가격 (만원)</div>
+            <div class="drop-range">
+                <input type="number" name="price_min" placeholder="최소" value="{{ price_min }}">
+                <span>~</span>
+                <input type="number" name="price_max" placeholder="최대" value="{{ price_max }}">
+            </div>
+            <div class="drop-btns">
+                <button type="button" class="drop-reset" onclick="clearFields('price_min','price_max')">초기화</button>
+                <button type="submit" class="drop-apply">적용</button>
+            </div>
+        </div>
+
+        <!-- 연료 패널 -->
+        <div class="drop-panel" id="dropFuel" style="min-width:170px;">
+            <div class="drop-title">연료</div>
+            {% for fuel in ['가솔린','디젤','전기','LPG(일반인 구입)','가솔린+전기'] %}
+            <label class="drop-radio">
+                <input type="radio" name="fuel_type" value="{{ fuel }}"
+                       {{ 'checked' if fuel_type == fuel }}
+                       onchange="this.form.submit()">
+                {{ fuel }}
+            </label>
+            {% endfor %}
+            <label class="drop-radio">
+                <input type="radio" name="fuel_type" value=""
+                       {{ 'checked' if not fuel_type }}
+                       onchange="this.form.submit()">
+                전체
+            </label>
+        </div>
+
+        <!-- 차체 패널 -->
+        <div class="drop-panel" id="dropBody" style="min-width:160px;">
+            <div class="drop-title">차체 형태</div>
+            {% for body in ['세단','SUV','해치백','쿠페','왜건','미니밴'] %}
+            <label class="drop-radio">
+                <input type="radio" name="body_type" value="{{ body }}"
+                       onchange="this.form.submit()">
+                {{ body }}
+            </label>
+            {% endfor %}
+            <label class="drop-radio">
+                <input type="radio" name="body_type" value="" checked
+                       onchange="this.form.submit()">
+                전체
+            </label>
+        </div>
+
+        </form><!-- /#filterForm -->
+
+        <!-- ── 결과 바 ───────────────────────── -->
+        <div class="result-bar">
+            <div class="result-left">
+                <span class="result-cnt">{{ "{:,}".format(total) }}대</span>
+                <button class="fav-toggle {{ 'on' if favs }}" id="favToggle" onclick="toggleFavFilter()">
+                    ♥ 찜한 차 <span class="fav-count" id="favCount">0</span>
+                </button>
+            </div>
+            <div class="result-right">
+                <select class="sort-select">
+                    <option>추천 순</option>
+                    <option>가격 낮은 순</option>
+                    <option>가격 높은 순</option>
+                    <option>연식 최신 순</option>
+                    <option>주행거리 짧은 순</option>
+                </select>
+                <div class="view-btns">
+                    <button class="vbtn on" id="v2" onclick="setView(2)" title="2열">⊞</button>
+                    <button class="vbtn"    id="v3" onclick="setView(3)" title="3열">⊟</button>
+                    <button class="vbtn"    id="vl" onclick="setView('l')" title="리스트">☰</button>
                 </div>
             </div>
+        </div>
 
-            <!-- 카드 그리드 -->
-            <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
-                {% for car in cars %}
-                <div class="col">
-                    <div class="car-card">
-                        <div class="car-card-img-wrap">
-                            {% if car.photo_url %}
-                            <img src="{{ car.photo_url }}" alt="{{ car.model }}">
-                            {% else %}
-                            <div class="car-card-img-placeholder">🚗</div>
-                            {% endif %}
-                            <span class="fuel-badge">{{ car.fuel_type }}</span>
-                        </div>
+        <!-- ── 차량 그리드 ─────────────────────── -->
+        <div class="car-grid" id="carGrid">
+            {% for car in cars %}
+            <a href="/car/{{ car.id }}" class="hd-card" data-id="{{ car.id }}">
+                <div class="hd-img">
+                    {% if car.photo_url %}
+                    <img src="{{ car.photo_url }}" alt="{{ car.model }}">
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#ccc;">🚗</div>
+                    {% endif %}
 
-                        <div class="car-card-body">
-                            <p class="car-meta">
-                                {{ car.year }}년 &middot; {{ "{:,}".format(car.mileage) }}km
-                            </p>
-                            <p class="car-title">{{ car.model }}</p>
-                            <p class="car-badge-text">{{ car.badge }}</p>
-                            <p class="price">{{ "{:,}".format(car.price) }}만원</p>
-                            <p class="car-region">📍 {{ car.region }}</p>
+                    <button class="like-btn" onclick="toggleLike(event,{{ car.id }})" title="찜하기">♡</button>
 
-                            <div class="card-btn-group">
-                                <a href="/car/{{ car.id }}" class="btn-detail">상세보기</a>
-                                <a href="https://fem.encar.com/cars/detail/{{ car.id }}"
-                                   target="_blank" class="btn-encar">엔카</a>
-                            </div>
-                        </div>
+                    {% if car.photo_url %}
+                    <div class="inner-thumb">
+                        <img src="{{ car.photo_url }}" alt="실내">
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="hd-body">
+                    <p class="hd-model">{{ car.model }} {{ car.badge }}</p>
+                    <p class="hd-meta">{{ car.year }}년 · {{ "{:,}".format(car.mileage) }}km</p>
+                    <div class="hd-price-row">
+                        <span class="hd-price">{{ "{:,}".format(car.price) }}만원</span>
+                    </div>
+                    <div class="hd-tags">
+                        <span class="hd-tag">{{ car.region }}</span>
+                        <span class="hd-tag">{{ car.fuel_type }}</span>
+                        <span class="hd-tag">{{ car.year }}년</span>
                     </div>
                 </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- 페이지네이션 -->
+        {% set bqs = 'manufacturer=' ~ manufacturer ~ '&fuel_type=' ~ (fuel_type or '') ~ '&year_min=' ~ (year_min or '') ~ '&year_max=' ~ (year_max or '') ~ '&price_min=' ~ (price_min or '') ~ '&price_max=' ~ (price_max or '') ~ '&mileage_min=' ~ (mileage_min or '') ~ '&mileage_max=' ~ (mileage_max or '') ~ '&q=' ~ (q or '') ~ '&favs=' ~ (favs or '') %}
+        {% set p_start = [1, page - 2]|max %}
+        {% set p_end   = [total_pages, p_start + 4]|min %}
+        {% set p_start = [1, p_end - 4]|max %}
+        <nav class="mt-4 mb-5">
+            <ul class="pagination justify-content-center flex-wrap gap-1">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="?{{ bqs }}&page={{ page-1 }}">← 이전</a>
+                </li>
+                {% endif %}
+                {% for p in range(p_start, p_end + 1) %}
+                <li class="page-item {{ 'active' if p==page }}">
+                    <a class="page-link" href="?{{ bqs }}&page={{ p }}">{{ p }}</a>
+                </li>
                 {% endfor %}
-            </div>
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="?{{ bqs }}&page={{ page+1 }}">다음 →</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
 
-            <!-- 페이지네이션 -->
-            <nav class="mt-5">
-                <ul class="pagination justify-content-center flex-wrap gap-1">
-                    {% if page > 1 %}
-                    <li class="page-item">
-                        <a class="page-link" href="?manufacturer={{ manufacturer }}&page={{ page-1 }}&fuel_type={{ fuel_type }}&year_min={{ year_min }}&year_max={{ year_max }}&price_min={{ price_min }}&price_max={{ price_max }}">
-                            ← 이전
-                        </a>
-                    </li>
-                    {% endif %}
+    </main>
+</div><!-- /.page-wrap -->
 
-                    {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
-                    <li class="page-item {{ 'active' if p == page }}">
-                        <a class="page-link" href="?manufacturer={{ manufacturer }}&page={{ p }}&fuel_type={{ fuel_type }}&year_min={{ year_min }}&year_max={{ year_max }}&price_min={{ price_min }}&price_max={{ price_max }}">
-                            {{ p }}
-                        </a>
-                    </li>
-                    {% endfor %}
+<script>
+/* ── 드롭다운 (fixed 위치 계산) ─────────────── */
+let openDrop = null;
 
-                    {% if page < total_pages %}
-                    <li class="page-item">
-                        <a class="page-link" href="?manufacturer={{ manufacturer }}&page={{ page+1 }}&fuel_type={{ fuel_type }}&year_min={{ year_min }}&year_max={{ year_max }}&price_min={{ price_min }}&price_max={{ price_max }}">
-                            다음 →
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
+function toggleDrop(id, triggerEl) {
+    const panel = document.getElementById(id);
+    const isOpen = panel.classList.contains('open');
+    closeAllDrops();
+    if (!isOpen) {
+        // 트리거 버튼 위치 기준으로 패널 위치 계산
+        const rect = triggerEl.getBoundingClientRect();
+        panel.style.top  = (rect.bottom + 6) + 'px';
+        panel.style.left = rect.left + 'px';
+        // 화면 오른쪽 넘침 방지
+        panel.classList.add('open');
+        const pw = panel.offsetWidth;
+        const vw = window.innerWidth;
+        if (rect.left + pw > vw - 8) {
+            panel.style.left = Math.max(8, vw - pw - 8) + 'px';
+        }
+        document.getElementById('dropDimmer').classList.add('on');
+        openDrop = panel;
+    }
+}
+function closeAllDrops() {
+    document.querySelectorAll('.drop-panel').forEach(p => p.classList.remove('open'));
+    document.getElementById('dropDimmer').classList.remove('on');
+    openDrop = null;
+}
+function clearFields(...names) {
+    const form = document.getElementById('filterForm');
+    names.forEach(n => { const el = form.querySelector(`[name="${n}"]`); if(el) el.value=''; });
+}
+function clearFilter(...names) {
+    const params = new URLSearchParams(location.search);
+    names.forEach(n => params.delete(n));
+    params.set('page', '1');
+    location.href = '/list?' + params.toString();
+}
 
-        </div>
-    </div>
-</div>
+/* ── 뷰 전환 ── */
+function setView(mode) {
+    const grid = document.getElementById('carGrid');
+    grid.className = 'car-grid';
+    if (mode === 3) grid.classList.add('g3');
+    if (mode === 'l') grid.classList.add('list-view');
+    ['v2','v3','vl'].forEach(id => document.getElementById(id).classList.remove('on'));
+    const map = {2:'v2', 3:'v3', l:'vl'};
+    document.getElementById(map[mode]).classList.add('on');
+    sessionStorage.setItem('listView', mode);
+}
+
+/* ── 사이드바 브랜드 검색 ── */
+function filterBrands(q) {
+    const lq = q.toLowerCase();
+    document.querySelectorAll('#brandList .sb-brand').forEach(el => {
+        const name = el.dataset.name.toLowerCase();
+        el.style.display = name.includes(lq) ? '' : 'none';
+    });
+}
+
+/* ── 찜하기 ── */
+const FAV_KEY = 'carmarket_favs';
+let favFilter = false;
+
+function getFavs() {
+    try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY)||'[]')); } catch { return new Set(); }
+}
+function saveFavs(s) { localStorage.setItem(FAV_KEY, JSON.stringify([...s])); }
+
+function toggleLike(e, id) {
+    e.preventDefault(); e.stopPropagation();
+    const favs = getFavs();
+    const btn = e.currentTarget;
+    const sid = String(id);
+    if (favs.has(sid)) {
+        favs.delete(sid); btn.textContent='♡'; btn.classList.remove('liked'); btn.style.color='';
+    } else {
+        favs.add(sid); btn.textContent='♥'; btn.classList.add('liked'); btn.style.color='#ef4444';
+        btn.style.transform='scale(1.4)'; setTimeout(()=>btn.style.transform='',200);
+    }
+    saveFavs(favs); updateFavUI();
+    if (favFilter) applyFavFilter();
+}
+function updateFavUI() {
+    const favs = getFavs();
+    document.getElementById('favCount').textContent = favs.size;
+    document.querySelectorAll('.hd-card').forEach(card => {
+        const btn = card.querySelector('.like-btn');
+        if (favs.has(String(card.dataset.id))) {
+            btn.textContent='♥'; btn.classList.add('liked'); btn.style.color='#ef4444';
+        } else {
+            btn.textContent='♡'; btn.classList.remove('liked'); btn.style.color='';
+        }
+    });
+}
+function applyFavFilter() {
+    const favs = getFavs();
+    document.querySelectorAll('.hd-card').forEach(card =>
+        card.classList.toggle('fav-hidden', favFilter && !favs.has(String(card.dataset.id)))
+    );
+}
+function toggleFavFilter() {
+    const params = new URLSearchParams(location.search);
+    if (params.get('favs')) {
+        // 찜 모드 해제 → 이전 상태로
+        params.delete('favs');
+        params.set('page', '1');
+        location.href = '/list?' + params.toString();
+    } else {
+        const favs = getFavs();
+        if (favs.size === 0) return;
+        location.href = '/list?favs=' + encodeURIComponent([...favs].join(','));
+    }
+}
+
+/* ── 페이지 로드 ── */
+document.addEventListener('DOMContentLoaded', () => {
+    updateFavUI();
+    // 뷰 모드 복원
+    const saved = sessionStorage.getItem('listView');
+    if (saved) setView(isNaN(saved) ? saved : Number(saved));
+    // 활성 브랜드 스크롤
+    const active = document.querySelector('.sb-brand.active');
+    if (active) active.scrollIntoView({block:'center', behavior:'instant'});
+});
+</script>
 
 </body>
 </html>
