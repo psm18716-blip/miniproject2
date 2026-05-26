@@ -54,11 +54,20 @@ def car_list():
     price_max     = request.args.get('price_max', '')
     mileage_min   = request.args.get('mileage_min', '')
     mileage_max   = request.args.get('mileage_max', '')
-    q             = request.args.get('q', '')      # 모델명·브랜드 통합 검색
-    favs          = request.args.get('favs', '')   # 찜한 차 ID 목록 (콤마 구분)
+    q             = request.args.get('q', '')
+    favs          = request.args.get('favs', '')
+    sort          = request.args.get('sort', 'price_asc')
     page          = int(request.args.get('page', 1))
     per_page      = 60
     offset        = (page - 1) * per_page
+
+    sort_map = {
+        'price_asc':   'price ASC',
+        'price_desc':  'price DESC',
+        'year_desc':   'year DESC, price ASC',
+        'mileage_asc': 'mileage ASC',
+    }
+    order_by = sort_map.get(sort, 'price ASC')
 
     # 찜한 차 모드: 특정 ID 목록만 조회 (다른 필터 무시)
     if favs:
@@ -114,7 +123,7 @@ def car_list():
         cur.execute(f"""
             SELECT id, manufacturer, model, badge, fuel_type, year, mileage, price, region, photo_url
             FROM cars {where}
-            ORDER BY price ASC
+            ORDER BY {order_by}
             LIMIT %s OFFSET %s
         """, params + [per_page, offset])
         cars = cur.fetchall()
@@ -128,8 +137,77 @@ def car_list():
                            fuel_type=fuel_type, year_min=year_min, year_max=year_max,
                            price_min=price_min, price_max=price_max,
                            mileage_min=mileage_min, mileage_max=mileage_max,
-                           q=q, favs=favs)
+                           q=q, favs=favs, sort=sort)
 
+
+
+@app.route('/analysis')
+def analysis():
+    conn = get_db()
+    with conn.cursor() as cur:
+        # 브랜드별 평균 시세 + 매물 수 (상위 10개)
+        cur.execute("""
+            SELECT manufacturer, ROUND(AVG(price)) as avg_price, COUNT(*) as cnt
+            FROM cars WHERE price > 50
+            GROUP BY manufacturer ORDER BY cnt DESC LIMIT 10
+        """)
+        brand_stats = cur.fetchall()
+
+        # 연식별 전체 평균 시세 (2010년 이후)
+        cur.execute("""
+            SELECT year, ROUND(AVG(price)) as avg_price, COUNT(*) as cnt
+            FROM cars WHERE price > 50 AND year >= 2010
+            GROUP BY year ORDER BY year
+        """)
+        year_stats = cur.fetchall()
+
+        # 연료 타입별 매물 수
+        cur.execute("""
+            SELECT fuel_type, COUNT(*) as cnt
+            FROM cars WHERE price > 50 AND fuel_type IS NOT NULL
+            GROUP BY fuel_type ORDER BY cnt DESC
+        """)
+        fuel_stats = cur.fetchall()
+
+        # 가격대별 분포
+        cur.execute("""
+            SELECT
+                CASE
+                    WHEN price < 500  THEN '500만 미만'
+                    WHEN price < 1000 THEN '500~1000만'
+                    WHEN price < 2000 THEN '1000~2000만'
+                    WHEN price < 3000 THEN '2000~3000만'
+                    WHEN price < 5000 THEN '3000~5000만'
+                    ELSE '5000만 이상'
+                END as label,
+                COUNT(*) as cnt,
+                MIN(price) as min_p
+            FROM cars WHERE price > 50
+            GROUP BY label ORDER BY min_p
+        """)
+        price_dist = cur.fetchall()
+
+        # 국산 vs 수입 요약
+        cur.execute("""
+            SELECT car_type, ROUND(AVG(price)) as avg_price, COUNT(*) as cnt
+            FROM cars WHERE price > 50
+            GROUP BY car_type
+        """)
+        type_stats = cur.fetchall()
+
+        # 전체 요약 통계
+        cur.execute("""
+            SELECT COUNT(*) as total, ROUND(AVG(price)) as avg_price,
+                   MIN(price) as min_price, MAX(price) as max_price
+            FROM cars WHERE price > 50
+        """)
+        summary = cur.fetchone()
+    conn.close()
+
+    return render_template('analysis.html',
+                           brand_stats=brand_stats, year_stats=year_stats,
+                           fuel_stats=fuel_stats, price_dist=price_dist,
+                           type_stats=type_stats, summary=summary)
 
 
 @app.route('/car/<car_id>')

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시세 분석 – CarMarket</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { background:#f9fafb; }
+
+        /* 요약 카드 */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 2rem;
+        }
+        .s-card {
+            background: #fff;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 1.25rem 1.4rem;
+        }
+        .s-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--gray-400);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .s-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--blue-600);
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+        .s-sub {
+            font-size: 0.78rem;
+            color: var(--gray-400);
+            margin-top: 4px;
+        }
+
+        /* 차트 카드 */
+        .chart-card {
+            background: #fff;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            letter-spacing: -0.2px;
+            margin-bottom: 1.25rem;
+        }
+        .chart-title span {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            margin-left: 8px;
+        }
+
+        /* 국산/수입 비교 바 */
+        .type-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+        .type-label {
+            width: 50px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--gray-700);
+            flex-shrink: 0;
+        }
+        .type-bar-wrap {
+            flex: 1;
+            background: var(--gray-100);
+            border-radius: 999px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .type-bar {
+            height: 100%;
+            border-radius: 999px;
+            background: var(--blue-600);
+        }
+        .type-val {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--blue-600);
+            flex-shrink: 0;
+            min-width: 70px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 네비게이션 -->
+<nav class="navbar">
+    <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
+    <div class="nav-tab-group">
+        <a href="/" class="nav-tab">홈</a>
+        <a href="/list" class="nav-tab">전체 매물</a>
+        <a href="/analysis" class="nav-tab active">📊 시세분석</a>
+    </div>
+</nav>
+
+<div class="container" style="max-width:1200px; padding:2rem 1.5rem 4rem;">
+
+    <div class="mb-4">
+        <h2 style="font-size:1.6rem; font-weight:800; letter-spacing:-0.5px;">📊 중고차 시세 분석</h2>
+        <p style="color:var(--gray-400); font-size:0.88rem;">엔카 크롤링 데이터 기반 · 가격 50만원 초과 매물 기준</p>
+    </div>
+
+    <!-- 요약 카드 4개 -->
+    <div class="summary-grid">
+        <div class="s-card">
+            <div class="s-label">총 매물 수</div>
+            <div class="s-value">{{ "{:,}".format(summary.total) }}</div>
+            <div class="s-sub">대</div>
+        </div>
+        <div class="s-card">
+            <div class="s-label">전체 평균 시세</div>
+            <div class="s-value">{{ "{:,}".format(summary.avg_price | int) }}</div>
+            <div class="s-sub">만원</div>
+        </div>
+        <div class="s-card">
+            <div class="s-label">최저가</div>
+            <div class="s-value">{{ "{:,}".format(summary.min_price) }}</div>
+            <div class="s-sub">만원</div>
+        </div>
+        <div class="s-card">
+            <div class="s-label">최고가</div>
+            <div class="s-value">{{ "{:,}".format(summary.max_price) }}</div>
+            <div class="s-sub">만원</div>
+        </div>
+    </div>
+
+    <!-- Row 1: 브랜드 평균 시세 + 연료 분포 -->
+    <div class="row g-4 mb-0">
+
+        <!-- 브랜드별 평균 시세 -->
+        <div class="col-12 col-lg-7">
+            <div class="chart-card" style="height:100%;">
+                <div class="chart-title">🏆 브랜드별 평균 시세 <span>매물 수 기준 상위 10개</span></div>
+                <canvas id="brandChart" height="260"></canvas>
+            </div>
+        </div>
+
+        <!-- 연료 분포 + 국산/수입 -->
+        <div class="col-12 col-lg-5">
+            <div class="chart-card mb-3">
+                <div class="chart-title">⛽ 연료 타입 분포</div>
+                <canvas id="fuelChart" height="180"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">🌐 국산 vs 수입 평균 시세</div>
+                {% set max_price = type_stats | map(attribute='avg_price') | max %}
+                {% for t in type_stats %}
+                <div class="type-row">
+                    <span class="type-label">{{ t.car_type }}</span>
+                    <div class="type-bar-wrap">
+                        <div class="type-bar" style="width:{{ (t.avg_price / max_price * 100) | int }}%; background: {{ '#2563eb' if t.car_type == '국산' else '#7c3aed' }};"></div>
+                    </div>
+                    <span class="type-val" style="color: {{ '#2563eb' if t.car_type == '국산' else '#7c3aed' }};">{{ "{:,}".format(t.avg_price | int) }}만</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--gray-400); margin-bottom:8px;">{{ "{:,}".format(t.cnt) }}대</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: 연식별 감가 패턴 -->
+    <div class="chart-card mt-4">
+        <div class="chart-title">📉 연식별 평균 시세 (감가 패턴) <span>2010년 이후 전 차종</span></div>
+        <canvas id="yearChart" height="110"></canvas>
+    </div>
+
+    <!-- Row 3: 가격대별 분포 -->
+    <div class="chart-card">
+        <div class="chart-title">💰 가격대별 매물 분포</div>
+        <canvas id="priceDistChart" height="100"></canvas>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const BLUE   = '#2563eb';
+const BLUE_L = 'rgba(37,99,235,0.12)';
+const COLORS = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#65a30d','#9333ea','#e11d48','#0f766e'];
+
+/* ── 공통 폰트 설정 ── */
+Chart.defaults.font.family = "'Pretendard', sans-serif";
+Chart.defaults.color = '#9ca3af';
+
+/* ── 브랜드별 평균 시세 (가로 막대) ── */
+const brandLabels = {{ brand_stats | map(attribute='manufacturer') | list | tojson }};
+const brandPrices = {{ brand_stats | map(attribute='avg_price') | list | tojson }};
+const brandCounts = {{ brand_stats | map(attribute='cnt') | list | tojson }};
+
+new Chart(document.getElementById('brandChart'), {
+    type: 'bar',
+    data: {
+        labels: brandLabels,
+        datasets: [{
+            label: '평균 시세 (만원)',
+            data: brandPrices,
+            backgroundColor: COLORS,
+            borderRadius: 6,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` 평균 ${ctx.parsed.x.toLocaleString()}만원 · ${brandCounts[ctx.dataIndex].toLocaleString()}대`
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { color: '#f3f4f6' },
+                ticks: { callback: v => v.toLocaleString() + '만' }
+            },
+            y: { grid: { display: false } }
+        }
+    }
+});
+
+/* ── 연료 분포 (도넛) ── */
+const fuelLabels = {{ fuel_stats | map(attribute='fuel_type') | list | tojson }};
+const fuelCounts = {{ fuel_stats | map(attribute='cnt') | list | tojson }};
+
+new Chart(document.getElementById('fuelChart'), {
+    type: 'doughnut',
+    data: {
+        labels: fuelLabels,
+        datasets: [{
+            data: fuelCounts,
+            backgroundColor: COLORS,
+            borderWidth: 2,
+            borderColor: '#fff',
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '62%',
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: { boxWidth: 12, padding: 12, font: { size: 12 } }
+            },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()}대`
+                }
+            }
+        }
+    }
+});
+
+/* ── 연식별 감가 패턴 (선) ── */
+const yearLabels  = {{ year_stats | map(attribute='year') | list | tojson }};
+const yearPrices  = {{ year_stats | map(attribute='avg_price') | list | tojson }};
+
+new Chart(document.getElementById('yearChart'), {
+    type: 'line',
+    data: {
+        labels: yearLabels,
+        datasets: [{
+            label: '평균 시세 (만원)',
+            data: yearPrices,
+            borderColor: BLUE,
+            backgroundColor: BLUE_L,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: BLUE,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` 평균 ${ctx.parsed.y.toLocaleString()}만원`
+                }
+            }
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: {
+                beginAtZero: false,
+                grid: { color: '#f3f4f6' },
+                ticks: { callback: v => v.toLocaleString() + '만' }
+            }
+        }
+    }
+});
+
+/* ── 가격대별 분포 (막대) ── */
+const pdLabels = {{ price_dist | map(attribute='label') | list | tojson }};
+const pdCounts = {{ price_dist | map(attribute='cnt') | list | tojson }};
+
+new Chart(document.getElementById('priceDistChart'), {
+    type: 'bar',
+    data: {
+        labels: pdLabels,
+        datasets: [{
+            label: '매물 수',
+            data: pdCounts,
+            backgroundColor: COLORS,
+            borderRadius: 8,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` ${ctx.parsed.y.toLocaleString()}대`
+                }
+            }
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: {
+                grid: { color: '#f3f4f6' },
+                ticks: { callback: v => v.toLocaleString() + '대' }
+            }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
