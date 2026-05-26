@@ -32,6 +32,7 @@ def predict_price(car):
 
 # DB 연결 함수
 def get_db():
+    ssl_config = {'ca': 'ca.pem'} if os.path.exists('ca.pem') else None
     return pymysql.connect(
         host=os.getenv('DB_HOST', '127.0.0.1'),
         port=int(os.getenv('DB_PORT', 3306)),
@@ -39,7 +40,8 @@ def get_db():
         user=os.getenv('DB_USER', 'root'),
         password=os.getenv('DB_PASSWORD', ''),
         charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor
+        cursorclass=pymysql.cursors.DictCursor,
+        ssl=ssl_config
     )
 
 @app.route('/')
