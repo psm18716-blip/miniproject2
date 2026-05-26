@@ -118,9 +118,12 @@
 
 <div class="container" style="max-width:1200px; padding:2rem 1.5rem 4rem;">
 
-    <div class="mb-4">
-        <h2 style="font-size:1.6rem; font-weight:800; letter-spacing:-0.5px;">📊 중고차 시세 분석</h2>
-        <p style="color:var(--gray-400); font-size:0.88rem;">엔카 크롤링 데이터 기반 · 가격 50만원 초과 매물 기준</p>
+    <!-- 페이지 헤더 -->
+    <div class="page-header" style="border-bottom:none; padding-bottom:0;">
+        <div>
+            <h2 class="page-title">📊 중고차 시세 분석</h2>
+            <p class="page-subtitle">엔카 크롤링 데이터 기반 · 가격 50만원 초과 매물 기준</p>
+        </div>
     </div>
 
     <!-- 요약 카드 4개 -->
@@ -221,7 +224,7 @@
         <div class="chart-title">🤖 데이터 Q&A <span>Gemini에게 직접 물어보세요</span></div>
 
         <!-- 추천 질문 칩 -->
-        <div style="display:flex; flex-wrap:wrap; gap:7px; margin-bottom:1rem;">
+        <div class="qa-chips">
             {% set suggestions = [
                 '왜 연식이 오래될수록 가격이 떨어지나요?',
                 '수입차가 국산차보다 비싼 이유는?',
@@ -230,39 +233,20 @@
                 '어떤 연식대가 가성비가 좋을까요?'
             ] %}
             {% for s in suggestions %}
-            <button onclick="setQuestion('{{ s }}')"
-                style="background:#f8faff; border:1.5px solid var(--blue-200); color:var(--blue-700);
-                       border-radius:999px; font-size:.78rem; font-weight:600; padding:5px 14px;
-                       cursor:pointer; font-family:'Pretendard',sans-serif; transition:all .15s;"
-                onmouseover="this.style.background='var(--blue-50)'"
-                onmouseout="this.style.background='#f8faff'">
-                {{ s }}
-            </button>
+            <button class="qa-chip" onclick="setQuestion('{{ s }}')">{{ s }}</button>
             {% endfor %}
         </div>
 
         <!-- 입력창 -->
-        <div style="display:flex; gap:8px; margin-bottom:1rem;">
-            <input id="qaInput" type="text" placeholder="데이터에 대해 궁금한 점을 질문하세요..."
-                style="flex:1; border:1.5px solid var(--gray-200); border-radius:10px;
-                       padding:10px 14px; font-size:.9rem; font-family:'Pretendard',sans-serif;
-                       outline:none; transition:border-color .15s;"
-                onfocus="this.style.borderColor='var(--blue-500)'"
-                onblur="this.style.borderColor='var(--gray-200)'"
-                onkeydown="if(event.key==='Enter') askGemini()">
-            <button onclick="askGemini()"
-                style="background:var(--blue-600); color:#fff; border:none; border-radius:10px;
-                       font-size:.88rem; font-weight:700; padding:10px 20px; cursor:pointer;
-                       font-family:'Pretendard',sans-serif; white-space:nowrap; transition:background .15s;"
-                onmouseover="this.style.background='var(--blue-700)'"
-                onmouseout="this.style.background='var(--blue-600)'">
-                전송 ↑
-            </button>
+        <div class="qa-input-wrap">
+            <input id="qaInput" type="text" class="qa-input"
+                   placeholder="데이터에 대해 궁금한 점을 질문하세요..."
+                   onkeydown="if(event.key==='Enter') askGemini()">
+            <button class="qa-btn" onclick="askGemini()">전송 ↑</button>
         </div>
 
         <!-- 답변 영역 -->
-        <div id="qaAnswer" style="display:none; background:var(--gray-50); border-radius:12px; padding:1.1rem 1.3rem;">
-        </div>
+        <div id="qaAnswer" class="qa-answer"></div>
     </div>
 
     <!-- Row 6: 브랜드별 연식 감가율 -->
@@ -277,132 +261,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const BLUE   = '#2563eb';
-const BLUE_L = 'rgba(37,99,235,0.12)';
-const COLORS = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#65a30d','#9333ea','#e11d48','#0f766e'];
+/* ── 데이터 주입 (Flask → JS) ── */
+const BRAND_LABELS = {{ brand_stats | map(attribute='manufacturer') | list | tojson }};
+const BRAND_PRICES = {{ brand_stats | map(attribute='avg_price')    | list | tojson }};
+const BRAND_COUNTS = {{ brand_stats | map(attribute='cnt')          | list | tojson }};
 
-/* ── 공통 폰트 설정 ── */
-Chart.defaults.font.family = "'Pretendard', sans-serif";
-Chart.defaults.color = '#9ca3af';
+const FUEL_LABELS  = {{ fuel_stats  | map(attribute='fuel_type')    | list | tojson }};
+const FUEL_COUNTS  = {{ fuel_stats  | map(attribute='cnt')          | list | tojson }};
 
-/* ── 브랜드별 평균 시세 (가로 막대) ── */
-const brandLabels = {{ brand_stats | map(attribute='manufacturer') | list | tojson }};
-const brandPrices = {{ brand_stats | map(attribute='avg_price') | list | tojson }};
-const brandCounts = {{ brand_stats | map(attribute='cnt') | list | tojson }};
+const YEAR_LABELS  = {{ year_stats  | map(attribute='year')         | list | tojson }};
+const YEAR_PRICES  = {{ year_stats  | map(attribute='avg_price')    | list | tojson }};
 
-new Chart(document.getElementById('brandChart'), {
-    type: 'bar',
-    data: {
-        labels: brandLabels,
-        datasets: [{
-            label: '평균 시세 (만원)',
-            data: brandPrices,
-            backgroundColor: COLORS,
-            borderRadius: 6,
-            borderSkipped: false,
-        }]
-    },
-    options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` 평균 ${ctx.parsed.x.toLocaleString()}만원 · ${brandCounts[ctx.dataIndex].toLocaleString()}대`
-                }
-            }
-        },
-        scales: {
-            x: {
-                grid: { color: '#f3f4f6' },
-                ticks: { callback: v => v.toLocaleString() + '만' }
-            },
-            y: { grid: { display: false } }
-        }
-    }
-});
+const PD_LABELS    = {{ price_dist  | map(attribute='label')        | list | tojson }};
+const PD_COUNTS    = {{ price_dist  | map(attribute='cnt')          | list | tojson }};
 
-/* ── 연료 분포 (도넛) ── */
-const fuelLabels = {{ fuel_stats | map(attribute='fuel_type') | list | tojson }};
-const fuelCounts = {{ fuel_stats | map(attribute='cnt') | list | tojson }};
+const DEP_DATA     = {{ dep_brands | tojson }};
+</script>
 
-new Chart(document.getElementById('fuelChart'), {
-    type: 'doughnut',
-    data: {
-        labels: fuelLabels,
-        datasets: [{
-            data: fuelCounts,
-            backgroundColor: COLORS,
-            borderWidth: 2,
-            borderColor: '#fff',
-        }]
-    },
-    options: {
-        responsive: true,
-        cutout: '62%',
-        plugins: {
-            legend: {
-                position: 'right',
-                labels: { boxWidth: 12, padding: 12, font: { size: 12 } }
-            },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()}대`
-                }
-            }
-        }
-    }
-});
+<!-- 4개 표준 차트: analysis.js가 처리 -->
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
 
-/* ── 연식별 감가 패턴 (선) ── */
-const yearLabels  = {{ year_stats | map(attribute='year') | list | tojson }};
-const yearPrices  = {{ year_stats | map(attribute='avg_price') | list | tojson }};
-
-new Chart(document.getElementById('yearChart'), {
-    type: 'line',
-    data: {
-        labels: yearLabels,
-        datasets: [{
-            label: '평균 시세 (만원)',
-            data: yearPrices,
-            borderColor: BLUE,
-            backgroundColor: BLUE_L,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: BLUE,
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` 평균 ${ctx.parsed.y.toLocaleString()}만원`
-                }
-            }
-        },
-        scales: {
-            x: { grid: { display: false } },
-            y: {
-                beginAtZero: false,
-                grid: { color: '#f3f4f6' },
-                ticks: { callback: v => v.toLocaleString() + '만' }
-            }
-        }
-    }
-});
-
-/* ── 브랜드별 감가율 (멀티라인) ── */
-const DEP_DATA = {{ dep_brands | tojson }};
-const DEP_BRANDS = Object.keys(DEP_DATA);
-const depActiveBrands = new Set(DEP_BRANDS.slice(0, 5)); // 처음에 5개만 표시
-
+<script>
+/* ── 브랜드별 감가율 차트 (DEP_DATA 의존, 인라인 유지) ── */
+const DEP_BRANDS      = Object.keys(DEP_DATA);
+const COLORS_DEP      = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626',
+                          '#0891b2','#65a30d','#9333ea','#e11d48','#0f766e'];
+const depActiveBrands = new Set(DEP_BRANDS.slice(0, 5));
 let depChart = null;
 
 function buildDepChart() {
@@ -411,40 +295,23 @@ function buildDepChart() {
         .map(b => ({
             label: b,
             data: DEP_DATA[b].years.map((y, j) => ({ x: y, y: DEP_DATA[b].prices[j] })),
-            borderColor: COLORS[DEP_BRANDS.indexOf(b) % COLORS.length],
+            borderColor: COLORS_DEP[DEP_BRANDS.indexOf(b) % COLORS_DEP.length],
             backgroundColor: 'transparent',
-            tension: 0.3,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            borderWidth: 2,
+            tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
         }));
-
     if (depChart) depChart.destroy();
-
     depChart = new Chart(document.getElementById('depChart'), {
         type: 'line',
         data: { datasets },
         options: {
-            responsive: true,
-            parsing: false,
+            responsive: true, parsing: false,
             plugins: {
                 legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 12 } } },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}만원`
-                    }
-                }
+                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}만원` } }
             },
             scales: {
-                x: {
-                    type: 'linear',
-                    ticks: { stepSize: 1, callback: v => v + '년' },
-                    grid: { display: false }
-                },
-                y: {
-                    grid: { color: '#f3f4f6' },
-                    ticks: { callback: v => v.toLocaleString() + '만' }
-                }
+                x: { type: 'linear', ticks: { stepSize: 1, callback: v => v + '년' }, grid: { display: false } },
+                y: { grid: { color: '#f3f4f6' }, ticks: { callback: v => v.toLocaleString() + '만' } }
             }
         }
     });
@@ -456,29 +323,18 @@ function renderDepBtns() {
     DEP_BRANDS.forEach((b, i) => {
         const btn = document.createElement('button');
         btn.textContent = b;
-        const color = COLORS[i % COLORS.length];
+        const color = COLORS_DEP[i % COLORS_DEP.length];
         btn.style.cssText = `padding:4px 12px; border-radius:999px; border:2px solid ${color}; font-size:0.8rem; font-weight:700; cursor:pointer; transition:all .15s;`;
-        if (depActiveBrands.has(b)) {
-            btn.style.background = color;
-            btn.style.color = '#fff';
-        } else {
-            btn.style.background = '#fff';
-            btn.style.color = color;
-        }
+        btn.style.background = depActiveBrands.has(b) ? color : '#fff';
+        btn.style.color      = depActiveBrands.has(b) ? '#fff' : color;
         btn.addEventListener('click', () => {
-            if (depActiveBrands.has(b)) {
-                if (depActiveBrands.size <= 1) return;
-                depActiveBrands.delete(b);
-            } else {
-                depActiveBrands.add(b);
-            }
-            renderDepBtns();
-            buildDepChart();
+            if (depActiveBrands.has(b)) { if (depActiveBrands.size <= 1) return; depActiveBrands.delete(b); }
+            else { depActiveBrands.add(b); }
+            renderDepBtns(); buildDepChart();
         });
         wrap.appendChild(btn);
     });
 }
-
 renderDepBtns();
 buildDepChart();
 
@@ -487,20 +343,16 @@ function setQuestion(q) {
     document.getElementById('qaInput').value = q;
     askGemini();
 }
-
 async function askGemini() {
     const input = document.getElementById('qaInput');
     const box   = document.getElementById('qaAnswer');
     const q = input.value.trim();
     if (!q) return;
-
     box.style.display = 'block';
     box.innerHTML = '<div style="color:var(--gray-400); font-size:.88rem; display:flex; align-items:center; gap:8px;"><span style="animation:spin 1s linear infinite; display:inline-block;">⏳</span> Gemini가 분석 중...</div>';
-
     try {
         const res  = await fetch('/api/ai-insight?q=' + encodeURIComponent(q));
         if (!res.ok) {
-            const txt = await res.text();
             box.innerHTML = `<div style="color:#dc2626; font-size:.85rem;">⚠️ 서버 오류 (${res.status})</div>`;
             return;
         }
@@ -516,42 +368,6 @@ async function askGemini() {
         box.innerHTML = '<div style="color:#dc2626; font-size:.85rem;">⚠️ 요청 실패</div>';
     }
 }
-
-/* ── 가격대별 분포 (막대) ── */
-const pdLabels = {{ price_dist | map(attribute='label') | list | tojson }};
-const pdCounts = {{ price_dist | map(attribute='cnt') | list | tojson }};
-
-new Chart(document.getElementById('priceDistChart'), {
-    type: 'bar',
-    data: {
-        labels: pdLabels,
-        datasets: [{
-            label: '매물 수',
-            data: pdCounts,
-            backgroundColor: COLORS,
-            borderRadius: 8,
-            borderSkipped: false,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` ${ctx.parsed.y.toLocaleString()}대`
-                }
-            }
-        },
-        scales: {
-            x: { grid: { display: false } },
-            y: {
-                grid: { color: '#f3f4f6' },
-                ticks: { callback: v => v.toLocaleString() + '대' }
-            }
-        }
-    }
-});
 </script>
 
 </body>

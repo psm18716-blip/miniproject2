@@ -15,13 +15,15 @@
         .predict-card {
             background: #fff;
             border: 1.5px solid var(--gray-200);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             padding: 2.2rem 2rem;
+            box-shadow: var(--shadow-sm);
         }
         .predict-title {
             font-size: 1.4rem;
             font-weight: 800;
             color: var(--gray-900);
+            letter-spacing: -0.4px;
             margin-bottom: .3rem;
         }
         .predict-sub {
@@ -136,7 +138,7 @@
 <body>
 
 <!-- ── 네비게이션 바 ──────────────────────────── -->
-<nav class="navbar" style="justify-content:space-between;">
+<nav class="navbar">
     <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
     <div class="nav-tab-group">
         <a href="/" class="nav-tab">홈</a>

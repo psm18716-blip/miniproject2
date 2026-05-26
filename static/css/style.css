@@ -59,6 +59,7 @@ a { color: inherit; text-decoration: none; }
     box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 
 .navbar-brand {
@@ -457,9 +458,9 @@ a { color: inherit; text-decoration: none; }
 .detail-img {
     width: 100%;
     height: 320px;
-    object-fit: cover;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
+    object-fit: contain;        /* cover → contain (차 전체 표시) */
+    background: #f5f5f5;
+    display: block;
 }
 
 .detail-model {
@@ -548,6 +549,128 @@ a { color: inherit; text-decoration: none; }
     box-shadow: var(--shadow-blue);
 }
 
+/* ── 페이지 헤더 (공통) ──────────────────────── */
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+.page-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-decoration: none;
+    transition: color .15s;
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 999px;
+    background: #fff;
+}
+.page-back:hover { color: var(--gray-700); border-color: var(--gray-400); }
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--gray-900);
+    margin: 0;
+    line-height: 1.2;
+}
+.page-subtitle {
+    font-size: 0.83rem;
+    color: var(--gray-400);
+    font-weight: 500;
+    margin: 2px 0 0;
+}
+
+/* ── 섹션 레이블 ─────────────────────────────── */
+.section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gray-400);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: block;
+}
+
+/* ── Q&A 컴포넌트 (analysis) ─────────────────── */
+.qa-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 1rem;
+}
+.qa-chip {
+    background: var(--blue-50);
+    border: 1.5px solid var(--blue-100);
+    color: var(--blue-700);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-family: 'Pretendard', sans-serif;
+    transition: var(--transition);
+}
+.qa-chip:hover {
+    background: var(--blue-100);
+    border-color: var(--blue-300);
+}
+.qa-input-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+.qa-input {
+    flex: 1;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-family: 'Pretendard', sans-serif;
+    color: var(--gray-900);
+    background: var(--gray-50);
+    outline: none;
+    transition: var(--transition);
+}
+.qa-input:focus {
+    border-color: var(--blue-500);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+.qa-btn {
+    background: var(--blue-600);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 10px 22px;
+    cursor: pointer;
+    font-family: 'Pretendard', sans-serif;
+    white-space: nowrap;
+    transition: var(--transition);
+}
+.qa-btn:hover {
+    background: var(--blue-700);
+    box-shadow: var(--shadow-blue);
+}
+.qa-answer {
+    display: none;
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.3rem;
+}
+
 /* ── 섹션 구분선 ─────────────────────────────── */
 .section-divider {
     border: none;
@@ -561,7 +684,6 @@ a { color: inherit; text-decoration: none; }
     color: var(--gray-500);
     font-weight: 500;
 }
-
 .result-count strong {
     color: var(--blue-600);
     font-weight: 800;

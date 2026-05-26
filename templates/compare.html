@@ -94,8 +94,8 @@
         .cmp-verdict.right { background:#eff6ff; border-color:#bfdbfe; }
         .cmp-verdict.draw { background:#f9fafb; border-color:var(--gray-200); }
         .verdict-icon { font-size:1.8rem; flex-shrink:0; }
-        .verdict-text { font-size:.95rem; font-weight:700; color:#1e3a5f; line-height:1.5; }
-        .verdict-text b { color:#2563eb; }
+        .verdict-text { font-size:.95rem; font-weight:700; color:var(--gray-900); line-height:1.5; }
+        .verdict-text b { color:var(--blue-600); }
     </style>
 </head>
 <body>
@@ -113,9 +113,12 @@
 
 <div class="cmp-wrap">
 
-    <div class="mb-4 d-flex align-items-center gap-3">
-        <a href="javascript:history.back()" style="color:var(--gray-400); text-decoration:none; font-size:.85rem; font-weight:600;">← 돌아가기</a>
-        <h2 style="font-size:1.5rem; font-weight:800; letter-spacing:-.4px; margin:0;">🔍 차량 비교</h2>
+    <!-- 페이지 헤더 -->
+    <div class="page-header">
+        <a href="javascript:history.back()" class="page-back">← 돌아가기</a>
+        <div>
+            <h2 class="page-title">🔍 차량 비교</h2>
+        </div>
     </div>
 
     {% set c0 = cars[0] %}
@@ -288,8 +291,8 @@
 
     <!-- 상세 페이지 링크 -->
     <div style="display:flex; gap:12px; margin-top:1.2rem;">
-        <a href="/car/{{ c0.id }}" style="flex:1; display:block; text-align:center; padding:11px; border-radius:10px; border:1.5px solid var(--gray-200); font-size:.88rem; font-weight:700; color:var(--gray-700); text-decoration:none; background:#fff; transition:all .15s;">{{ c0.model }} 상세보기 →</a>
-        <a href="/car/{{ c1.id }}" style="flex:1; display:block; text-align:center; padding:11px; border-radius:10px; border:1.5px solid var(--gray-200); font-size:.88rem; font-weight:700; color:var(--gray-700); text-decoration:none; background:#fff; transition:all .15s;">{{ c1.model }} 상세보기 →</a>
+        <a href="/car/{{ c0.id }}" class="btn-encar" style="flex:1; display:block; text-align:center; padding:12px; border-radius:var(--radius-sm);">{{ c0.model }} 상세보기 →</a>
+        <a href="/car/{{ c1.id }}" class="btn-encar" style="flex:1; display:block; text-align:center; padding:12px; border-radius:var(--radius-sm);">{{ c1.model }} 상세보기 →</a>
     </div>
 
 </div>

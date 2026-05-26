@@ -102,19 +102,71 @@
             white-space: nowrap;
         }
 
+        /* 정렬 버튼 */
+        .sort-btn {
+            font-size: .75rem;
+            padding: .25rem .75rem;
+            border-radius: 999px;
+            border: 1.5px solid var(--gray-200);
+            background: #fff;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Pretendard', sans-serif;
+            transition: all .15s;
+        }
+        .sort-btn:hover { border-color: var(--blue-400); color: var(--blue-600); }
+        .sort-btn.active {
+            border-color: var(--blue-600);
+            background: var(--blue-600);
+            color: #fff;
+        }
+
+        /* 필터 바 */
+        .filter-bar {
+            flex-shrink: 0;
+            background: #fff;
+            border-bottom: 1.5px solid var(--gray-100);
+            padding: .7rem 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .filter-bar-label {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--gray-600);
+            white-space: nowrap;
+        }
+        .filter-select {
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: .83rem;
+            font-weight: 500;
+            padding: .35rem .7rem;
+            color: var(--gray-700);
+            background: #fff;
+            outline: none;
+            font-family: 'Pretendard', sans-serif;
+            transition: border-color .15s;
+        }
+        .filter-select:focus { border-color: var(--blue-500); }
+        .filter-hint {
+            font-size: .8rem;
+            color: var(--gray-400);
+        }
+
         /* 슬라이드 아웃 애니메이션 */
         @keyframes slideOut {
             from { transform: translateX(0); opacity: 1; }
             to   { transform: translateX(-60px); opacity: 0; }
         }
-        .slide-out {
-            animation: slideOut .3s ease-in forwards;
-        }
+        .slide-out { animation: slideOut .3s ease-in forwards; }
     </style>
 </head>
 <body>
 
-<nav class="navbar" style="justify-content:space-between;">
+<nav class="navbar">
     <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
     <div class="nav-tab-group">
         <a href="/" class="nav-tab">홈</a>
@@ -126,18 +178,18 @@
 </nav>
 
 <!-- 차종 필터 바 -->
-<div class="filter-bar" style="background:#fff; border-bottom:1.5px solid var(--gray-100); padding:.7rem 1.4rem; display:flex; align-items:center; gap:12px;">
-    <span style="font-size:.82rem; font-weight:700; color:var(--gray-600); white-space:nowrap;">차종 비교</span>
-    <select id="filter-mfr" class="form-select form-select-sm" style="max-width:140px;">
+<div class="filter-bar">
+    <span class="filter-bar-label">차종 비교</span>
+    <select id="filter-mfr" class="filter-select" style="max-width:140px;">
         <option value="">전체 브랜드</option>
         {% for m in manufacturers %}
         <option value="{{ m }}">{{ m }}</option>
         {% endfor %}
     </select>
-    <select id="filter-model" class="form-select form-select-sm" style="max-width:180px;">
+    <select id="filter-model" class="filter-select" style="max-width:180px;">
         <option value="">전체 모델</option>
     </select>
-    <span id="filter-label" style="font-size:.8rem; color:var(--gray-400);"></span>
+    <span id="filter-label" class="filter-hint"></span>
 </div>
 
 <div class="region-wrap">
@@ -148,8 +200,8 @@
             <h2>지역별 평균 시세</h2>
             <p>지역을 클릭하면 해당 매물을 볼 수 있어요</p>
             <div style="display:flex; gap:6px; margin-top:.6rem;">
-                <button id="sort-cnt" onclick="setSort('cnt')" class="sort-btn active" style="font-size:.75rem; padding:.2rem .7rem; border-radius:99px; border:1.5px solid var(--blue-600); background:var(--blue-600); color:#fff; cursor:pointer; font-weight:700;">매물 많은 순</button>
-                <button id="sort-price" onclick="setSort('price')" class="sort-btn" style="font-size:.75rem; padding:.2rem .7rem; border-radius:99px; border:1.5px solid var(--gray-200); background:#fff; color:var(--gray-600); cursor:pointer; font-weight:700;">가격 낮은 순</button>
+                <button id="sort-cnt"   onclick="setSort('cnt')"   class="sort-btn active">매물 많은 순</button>
+                <button id="sort-price" onclick="setSort('price')" class="sort-btn">가격 낮은 순</button>
             </div>
         </div>
         <div class="region-list">
@@ -250,8 +302,8 @@ let lastData = REGION_DATA;
 
 function setSort(sort) {
     currentSort = sort;
-    document.getElementById('sort-cnt').style.cssText   = sort === 'cnt'   ? 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--blue-600);background:var(--blue-600);color:#fff;cursor:pointer;font-weight:700;' : 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;font-weight:700;';
-    document.getElementById('sort-price').style.cssText = sort === 'price' ? 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--blue-600);background:var(--blue-600);color:#fff;cursor:pointer;font-weight:700;' : 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;font-weight:700;';
+    document.getElementById('sort-cnt').classList.toggle('active', sort === 'cnt');
+    document.getElementById('sort-price').classList.toggle('active', sort === 'price');
     renderList(lastData);
 }
 
