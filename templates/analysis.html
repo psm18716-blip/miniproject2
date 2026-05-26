@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body { background:#f9fafb; }
+        @keyframes spin { to { transform:rotate(360deg); } }
 
         /* 요약 카드 */
         .summary-grid {
@@ -193,6 +194,85 @@
         <canvas id="priceDistChart" height="100"></canvas>
     </div>
 
+    <!-- Row 4: 상관관계 분석 -->
+    <div class="chart-card">
+        <div class="chart-title">📐 가격 영향 요인 분석 <span>상관계수 · 회귀분석</span></div>
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:1rem;">
+            <div style="background:var(--blue-50); border:1.5px solid var(--blue-100); border-radius:12px; padding:1.1rem 1.3rem;">
+                <div style="font-size:.72rem; font-weight:700; color:var(--blue-400); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">연식 ↔ 가격 상관계수</div>
+                <div style="font-size:1.8rem; font-weight:900; color:var(--blue-600); letter-spacing:-1px;">{{ corr_year }}</div>
+                <div style="font-size:.8rem; color:var(--gray-500); margin-top:4px;">연식 1년 상승 → 평균 <b style="color:var(--blue-600);">+{{ "{:,}".format(price_per_year) }}만원</b></div>
+                <div style="font-size:.75rem; color:var(--gray-400); margin-top:6px; line-height:1.5;">1에 가까울수록 최신 연식일수록 가격이 높음</div>
+            </div>
+            <div style="background:#faf5ff; border:1.5px solid #e9d5ff; border-radius:12px; padding:1.1rem 1.3rem;">
+                <div style="font-size:.72rem; font-weight:700; color:#7c3aed; letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">주행거리 ↔ 가격 상관계수</div>
+                <div style="font-size:1.8rem; font-weight:900; color:#7c3aed; letter-spacing:-1px;">{{ corr_mileage }}</div>
+                <div style="font-size:.8rem; color:var(--gray-500); margin-top:4px;">1만km 증가 → 평균 <b style="color:#7c3aed;">{{ "{:,}".format(price_per_10k_km) }}만원</b></div>
+                <div style="font-size:.75rem; color:var(--gray-400); margin-top:6px; line-height:1.5;">-1에 가까울수록 주행거리가 많을수록 가격이 낮음</div>
+            </div>
+        </div>
+        <div style="background:var(--gray-50); border-radius:10px; padding:.9rem 1.1rem; font-size:.82rem; color:var(--gray-500); line-height:1.7;">
+            💡 상관계수는 -1~1 사이 값으로, <b>1</b>에 가까울수록 양의 상관(함께 증가), <b>-1</b>에 가까울수록 음의 상관(반대로 움직임), <b>0</b>에 가까울수록 관계없음을 의미합니다.
+        </div>
+    </div>
+
+    <!-- Row 5: AI 인사이트 채팅 -->
+    <div class="chart-card">
+        <div class="chart-title">🤖 데이터 Q&A <span>Gemini에게 직접 물어보세요</span></div>
+
+        <!-- 추천 질문 칩 -->
+        <div style="display:flex; flex-wrap:wrap; gap:7px; margin-bottom:1rem;">
+            {% set suggestions = [
+                '왜 연식이 오래될수록 가격이 떨어지나요?',
+                '수입차가 국산차보다 비싼 이유는?',
+                '가솔린 차가 가장 많은 이유가 뭔가요?',
+                '주행거리가 가격에 얼마나 영향을 주나요?',
+                '어떤 연식대가 가성비가 좋을까요?'
+            ] %}
+            {% for s in suggestions %}
+            <button onclick="setQuestion('{{ s }}')"
+                style="background:#f8faff; border:1.5px solid var(--blue-200); color:var(--blue-700);
+                       border-radius:999px; font-size:.78rem; font-weight:600; padding:5px 14px;
+                       cursor:pointer; font-family:'Pretendard',sans-serif; transition:all .15s;"
+                onmouseover="this.style.background='var(--blue-50)'"
+                onmouseout="this.style.background='#f8faff'">
+                {{ s }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- 입력창 -->
+        <div style="display:flex; gap:8px; margin-bottom:1rem;">
+            <input id="qaInput" type="text" placeholder="데이터에 대해 궁금한 점을 질문하세요..."
+                style="flex:1; border:1.5px solid var(--gray-200); border-radius:10px;
+                       padding:10px 14px; font-size:.9rem; font-family:'Pretendard',sans-serif;
+                       outline:none; transition:border-color .15s;"
+                onfocus="this.style.borderColor='var(--blue-500)'"
+                onblur="this.style.borderColor='var(--gray-200)'"
+                onkeydown="if(event.key==='Enter') askGemini()">
+            <button onclick="askGemini()"
+                style="background:var(--blue-600); color:#fff; border:none; border-radius:10px;
+                       font-size:.88rem; font-weight:700; padding:10px 20px; cursor:pointer;
+                       font-family:'Pretendard',sans-serif; white-space:nowrap; transition:background .15s;"
+                onmouseover="this.style.background='var(--blue-700)'"
+                onmouseout="this.style.background='var(--blue-600)'">
+                전송 ↑
+            </button>
+        </div>
+
+        <!-- 답변 영역 -->
+        <div id="qaAnswer" style="display:none; background:var(--gray-50); border-radius:12px; padding:1.1rem 1.3rem;">
+        </div>
+    </div>
+
+    <!-- Row 6: 브랜드별 연식 감가율 -->
+    <div class="chart-card">
+        <div class="chart-title">📉 브랜드별 연식 감가율 <span>매물 500건 이상 브랜드 · 2015년 이후</span></div>
+        <!-- 브랜드 토글 버튼 -->
+        <div id="depBrandBtns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:1rem;"></div>
+        <canvas id="depChart" height="110"></canvas>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -317,6 +397,125 @@ new Chart(document.getElementById('yearChart'), {
         }
     }
 });
+
+/* ── 브랜드별 감가율 (멀티라인) ── */
+const DEP_DATA = {{ dep_brands | tojson }};
+const DEP_BRANDS = Object.keys(DEP_DATA);
+const depActiveBrands = new Set(DEP_BRANDS.slice(0, 5)); // 처음에 5개만 표시
+
+let depChart = null;
+
+function buildDepChart() {
+    const datasets = DEP_BRANDS
+        .filter(b => depActiveBrands.has(b))
+        .map(b => ({
+            label: b,
+            data: DEP_DATA[b].years.map((y, j) => ({ x: y, y: DEP_DATA[b].prices[j] })),
+            borderColor: COLORS[DEP_BRANDS.indexOf(b) % COLORS.length],
+            backgroundColor: 'transparent',
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 2,
+        }));
+
+    if (depChart) depChart.destroy();
+
+    depChart = new Chart(document.getElementById('depChart'), {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            parsing: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 12 } } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}만원`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    ticks: { stepSize: 1, callback: v => v + '년' },
+                    grid: { display: false }
+                },
+                y: {
+                    grid: { color: '#f3f4f6' },
+                    ticks: { callback: v => v.toLocaleString() + '만' }
+                }
+            }
+        }
+    });
+}
+
+function renderDepBtns() {
+    const wrap = document.getElementById('depBrandBtns');
+    wrap.innerHTML = '';
+    DEP_BRANDS.forEach((b, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = b;
+        const color = COLORS[i % COLORS.length];
+        btn.style.cssText = `padding:4px 12px; border-radius:999px; border:2px solid ${color}; font-size:0.8rem; font-weight:700; cursor:pointer; transition:all .15s;`;
+        if (depActiveBrands.has(b)) {
+            btn.style.background = color;
+            btn.style.color = '#fff';
+        } else {
+            btn.style.background = '#fff';
+            btn.style.color = color;
+        }
+        btn.addEventListener('click', () => {
+            if (depActiveBrands.has(b)) {
+                if (depActiveBrands.size <= 1) return;
+                depActiveBrands.delete(b);
+            } else {
+                depActiveBrands.add(b);
+            }
+            renderDepBtns();
+            buildDepChart();
+        });
+        wrap.appendChild(btn);
+    });
+}
+
+renderDepBtns();
+buildDepChart();
+
+/* ── Gemini Q&A ── */
+function setQuestion(q) {
+    document.getElementById('qaInput').value = q;
+    askGemini();
+}
+
+async function askGemini() {
+    const input = document.getElementById('qaInput');
+    const box   = document.getElementById('qaAnswer');
+    const q = input.value.trim();
+    if (!q) return;
+
+    box.style.display = 'block';
+    box.innerHTML = '<div style="color:var(--gray-400); font-size:.88rem; display:flex; align-items:center; gap:8px;"><span style="animation:spin 1s linear infinite; display:inline-block;">⏳</span> Gemini가 분석 중...</div>';
+
+    try {
+        const res  = await fetch('/api/ai-insight?q=' + encodeURIComponent(q));
+        if (!res.ok) {
+            const txt = await res.text();
+            box.innerHTML = `<div style="color:#dc2626; font-size:.85rem;">⚠️ 서버 오류 (${res.status})</div>`;
+            return;
+        }
+        const data = await res.json();
+        if (data.error) {
+            box.innerHTML = `<div style="color:#dc2626; font-size:.85rem;">⚠️ ${data.error}</div>`;
+        } else {
+            const qLabel = `<div style="font-size:.78rem; font-weight:700; color:var(--blue-500); margin-bottom:.6rem;">Q. ${q}</div>`;
+            const answer = `<div style="font-size:.9rem; color:var(--gray-700); line-height:1.8;">${data.insight.replace(/\n/g,'<br>')}</div>`;
+            box.innerHTML = qLabel + answer;
+        }
+    } catch(e) {
+        box.innerHTML = '<div style="color:#dc2626; font-size:.85rem;">⚠️ 요청 실패</div>';
+    }
+}
 
 /* ── 가격대별 분포 (막대) ── */
 const pdLabels = {{ price_dist | map(attribute='label') | list | tojson }};

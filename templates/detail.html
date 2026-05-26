@@ -23,84 +23,58 @@
 
 <div class="container" style="max-width:1100px; padding: 2rem 1.5rem 4rem;">
 
-    <div class="row g-4">
+    <div class="row g-4" style="align-items:stretch;">
 
-        <!-- ── 왼쪽: 사진 + 기본 정보 ─────────── -->
+        <!-- ── 왼쪽: 사진 + 기본 정보 (하나의 카드) ── -->
         <div class="col-12 col-lg-6">
+            <div class="detail-card" style="padding:0; overflow:hidden; height:100%;">
 
-            <!-- 차량 사진 -->
-            {% if car.photo_url %}
-            <img src="{{ car.photo_url }}"
-                 alt="{{ car.model }}"
-                 class="detail-img">
-            {% else %}
-            <div class="detail-img d-flex align-items-center justify-content-center"
-                 style="background:var(--gray-100); font-size:4rem; color:var(--gray-400);">
-                🚗
-            </div>
-            {% endif %}
-
-            <!-- 기본 정보 카드 -->
-            <div class="detail-card mt-3">
-                <p class="detail-badge">{{ car.badge }}</p>
-                <h1 class="detail-model">{{ car.model }}</h1>
-                <p class="detail-price">{{ "{:,}".format(car.price) }}만원</p>
-
-                {% if ai_price %}
-                {% set diff = car.price - ai_price %}
-                {% set pct = ((diff / ai_price) * 100) | abs | round(1) %}
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
-                    <span style="font-size:.82rem; color:var(--gray-500);">AI 예측 시세 <b style="color:var(--gray-700);">{{ "{:,}".format(ai_price) }}만원</b></span>
-                    {% if diff < 0 %}
-                    <span style="background:#dcfce7; color:#16a34a; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">
-                        시세보다 {{ "{:,}".format(-diff) }}만원 ({{ pct }}%) 저렴
-                    </span>
-                    {% elif diff > 0 %}
-                    <span style="background:#fef2f2; color:#dc2626; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">
-                        시세보다 {{ "{:,}".format(diff) }}만원 ({{ pct }}%) 비쌈
-                    </span>
-                    {% else %}
-                    <span style="background:#f3f4f6; color:#6b7280; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">
-                        시세와 동일
-                    </span>
-                    {% endif %}
-                </div>
+                <!-- 차량 사진 -->
+                {% if car.photo_url %}
+                <img src="{{ car.photo_url }}" alt="{{ car.model }}"
+                     style="width:100%; height:260px; object-fit:cover; display:block;">
+                {% else %}
+                <div style="width:100%; height:260px; background:var(--gray-100); display:flex; align-items:center; justify-content:center; font-size:4rem; color:var(--gray-300);">🚗</div>
                 {% endif %}
 
-                <table class="detail-table w-100">
-                    <tr>
-                        <td>연식</td>
-                        <td>{{ car.year }}년</td>
-                    </tr>
-                    <tr>
-                        <td>주행거리</td>
-                        <td>{{ "{:,}".format(car.mileage) }}km</td>
-                    </tr>
-                    <tr>
-                        <td>연료</td>
-                        <td>{{ car.fuel_type }}</td>
-                    </tr>
-                    <tr>
-                        <td>지역</td>
-                        <td>{{ car.region }}</td>
-                    </tr>
-                    <tr>
-                        <td>구분</td>
-                        <td>{{ car.car_type }}</td>
-                    </tr>
-                </table>
+                <!-- 기본 정보 -->
+                <div style="padding:1.3rem 1.5rem 1.5rem;">
+                    <p class="detail-badge">{{ car.badge }}</p>
+                    <h1 class="detail-model">{{ car.model }}</h1>
+                    <p class="detail-price">{{ "{:,}".format(car.price) }}만원</p>
 
-                <a href="https://fem.encar.com/cars/detail/{{ car.id }}"
-                   target="_blank"
-                   class="btn-encar-full">
-                    엔카에서 원문 보기 →
-                </a>
+                    {% if ai_price %}
+                    {% set diff = car.price - ai_price %}
+                    {% set pct = ((diff / ai_price) * 100) | abs | round(1) %}
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
+                        <span style="font-size:.82rem; color:var(--gray-500);">AI 예측 시세 <b style="color:var(--gray-700);">{{ "{:,}".format(ai_price) }}만원</b></span>
+                        {% if diff < 0 %}
+                        <span style="background:#dcfce7; color:#16a34a; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">시세보다 {{ "{:,}".format(-diff) }}만원 ({{ pct }}%) 저렴</span>
+                        {% elif diff > 0 %}
+                        <span style="background:#fef2f2; color:#dc2626; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">시세보다 {{ "{:,}".format(diff) }}만원 ({{ pct }}%) 비쌈</span>
+                        {% else %}
+                        <span style="background:#f3f4f6; color:#6b7280; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">시세와 동일</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <table class="detail-table w-100">
+                        <tr><td>연식</td><td>{{ car.year }}년</td></tr>
+                        <tr><td>주행거리</td><td>{{ "{:,}".format(car.mileage) }}km</td></tr>
+                        <tr><td>연료</td><td>{{ car.fuel_type }}</td></tr>
+                        <tr><td>지역</td><td>{{ car.region }}</td></tr>
+                        <tr><td>구분</td><td>{{ car.car_type }}</td></tr>
+                    </table>
+
+                    <a href="https://fem.encar.com/cars/detail/{{ car.id }}"
+                       target="_blank" class="btn-encar-full">엔카에서 원문 보기 →</a>
+                </div>
             </div>
         </div>
 
-        <!-- ── 오른쪽: 시세 차트 ──────────────── -->
+        <!-- ── 오른쪽: 차트 + AI 분석 (하나의 카드) ── -->
         <div class="col-12 col-lg-6">
-            <div class="detail-card h-100 d-flex flex-column">
+            <div class="detail-card d-flex flex-column" style="height:100%;">
                 <div class="mb-3">
                     <p class="sidebar-title mb-1">시세 분석</p>
                     <h6 class="fw-bold" style="font-size:1rem; letter-spacing:-0.2px;">
@@ -134,8 +108,128 @@
                         </div>
                     </div>
                 </div>
+
+            <!-- ── AI 분석 (같은 카드 안, 구분선으로 분리) ── -->
+            {% set ai_diff_pct = ((ai_price - car.price) / ai_price * 100) | round(1) if ai_price else 0 %}
+            {% set mile_ratio  = (car.mileage / avg_mileage) if avg_mileage else 1 %}
+            <div style="border-top:1px solid var(--gray-100); padding:1.3rem 1.5rem 1.5rem;">
+
+                <!-- 추천 점수 -->
+                <div style="display:flex; align-items:center; gap:1.2rem; margin-bottom:1.3rem; padding-bottom:1.2rem; border-bottom:1px solid var(--gray-100);">
+                    <div style="position:relative; width:80px; height:80px; flex-shrink:0;">
+                        <svg width="80" height="80" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="34" fill="none" stroke="var(--gray-100)" stroke-width="8"/>
+                            <circle cx="40" cy="40" r="34" fill="none"
+                                stroke="{{ '#16a34a' if score >= 75 else ('#2563eb' if score >= 55 else ('#d97706' if score >= 40 else '#dc2626')) }}"
+                                stroke-width="8" stroke-linecap="round"
+                                stroke-dasharray="{{ (score / 100 * 213.6) | round(1) }} 213.6"
+                                transform="rotate(-90 40 40)"/>
+                        </svg>
+                        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                            <span style="font-size:1.3rem; font-weight:900; line-height:1; color:{{ '#16a34a' if score >= 75 else ('#2563eb' if score >= 55 else ('#d97706' if score >= 40 else '#dc2626')) }};">{{ score }}</span>
+                            <span style="font-size:.58rem; font-weight:700; color:var(--gray-400);">/ 100</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:.72rem; font-weight:700; color:var(--gray-400); letter-spacing:.05em; text-transform:uppercase; margin-bottom:4px;">AI 추천 점수</div>
+                        <div style="font-size:1.15rem; font-weight:900; color:{{ '#16a34a' if score >= 75 else ('#2563eb' if score >= 55 else ('#d97706' if score >= 40 else '#dc2626')) }}; letter-spacing:-.3px;">
+                            {% if score >= 75 %}우수 — 적극 추천
+                            {% elif score >= 55 %}양호 — 고려해볼 만함
+                            {% elif score >= 40 %}보통 — 신중한 검토 필요
+                            {% else %}주의 — 재고 권장{% endif %}
+                        </div>
+                        <div style="font-size:.78rem; color:var(--gray-400); margin-top:3px;">가격·주행거리·시세 종합 평가</div>
+                    </div>
+                </div>
+
+                <!-- 체크리스트 -->
+                <div style="font-size:.72rem; font-weight:700; color:var(--gray-400); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.7rem;">AI 분석</div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:1.3rem;">
+
+                    {% if ai_price %}
+                    {% if ai_diff_pct >= 10 %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#16a34a; font-size:1rem;">✔</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">AI 시세 대비 <b style="color:#16a34a;">{{ ai_diff_pct }}% 저렴</b></span>
+                    </div>
+                    {% elif ai_diff_pct >= 0 %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#2563eb; font-size:1rem;">✔</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">AI 시세와 <b style="color:#2563eb;">유사한 가격</b></span>
+                    </div>
+                    {% else %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#d97706; font-size:1rem;">⚠</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">AI 시세보다 <b style="color:#d97706;">{{ (ai_diff_pct | abs) }}% 높은 가격</b></span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if avg_mileage %}
+                    {% if mile_ratio < 0.7 %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#16a34a; font-size:1rem;">✔</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">동연식 평균보다 <b style="color:#16a34a;">주행거리 적음</b> (평균 {{ "{:,}".format(avg_mileage) }}km)</span>
+                    </div>
+                    {% elif mile_ratio < 1.3 %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#2563eb; font-size:1rem;">✔</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">주행거리 <b style="color:#2563eb;">평균 수준</b> (평균 {{ "{:,}".format(avg_mileage) }}km)</span>
+                    </div>
+                    {% else %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#dc2626; font-size:1rem;">⚠</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">동연식 평균보다 <b style="color:#dc2626;">주행거리 많음</b> (평균 {{ "{:,}".format(avg_mileage) }}km)</span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if region_avg and region_cnt >= 3 %}
+                    {% if car.price < region_avg %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#16a34a; font-size:1rem;">✔</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">{{ car.region }} 지역 평균({{ "{:,}".format(region_avg) }}만)보다 <b style="color:#16a34a;">저렴</b></span>
+                    </div>
+                    {% else %}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#d97706; font-size:1rem;">⚠</span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">{{ car.region }} 지역 평균({{ "{:,}".format(region_avg) }}만)보다 <b style="color:#d97706;">높은 가격</b></span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:{{ '#16a34a' if model_cnt >= 100 else ('#2563eb' if model_cnt >= 30 else '#d97706') }}; font-size:1rem;">
+                            {{ '✔' if model_cnt >= 30 else '⚠' }}
+                        </span>
+                        <span style="font-size:.88rem; color:var(--gray-700);">
+                            전국 매물 <b>{{ "{:,}".format(model_cnt) }}대</b>
+                            — {{ '유동성 높음' if model_cnt >= 100 else ('거래 활발' if model_cnt >= 30 else '희소 차종') }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 지역 시세 비교 바 -->
+                {% if region_avg and region_cnt >= 3 %}
+                <div style="font-size:.72rem; font-weight:700; color:var(--gray-400); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.7rem;">{{ car.region }} 지역 시세</div>
+                {% set bar_min = [car.price, region_avg] | min %}
+                {% set bar_max = [car.price, region_avg] | max %}
+                {% set car_pct = ((car.price - bar_min) / (bar_max - bar_min + 1) * 80 + 10) | int %}
+                {% set avg_pct = ((region_avg - bar_min) / (bar_max - bar_min + 1) * 80 + 10) | int %}
+                <div style="position:relative; height:6px; background:var(--gray-100); border-radius:999px; margin:1.2rem 0 1.5rem;">
+                    <div style="position:absolute; left:{{ [car_pct, avg_pct] | min }}%; width:{{ (car_pct - avg_pct) | abs }}%; height:100%; background:var(--blue-200); border-radius:999px;"></div>
+                    <div style="position:absolute; left:{{ car_pct }}%; transform:translateX(-50%); top:-5px; width:16px; height:16px; background:var(--blue-600); border-radius:50%; border:2.5px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.2);" title="이 차량"></div>
+                    <div style="position:absolute; left:{{ avg_pct }}%; transform:translateX(-50%); top:-5px; width:16px; height:16px; background:var(--gray-400); border-radius:50%; border:2.5px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.2);" title="지역 평균"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:.78rem;">
+                    <span><span style="display:inline-block; width:9px; height:9px; background:var(--blue-600); border-radius:50%; margin-right:4px;"></span>이 차량 <b>{{ "{:,}".format(car.price) }}만</b></span>
+                    <span><span style="display:inline-block; width:9px; height:9px; background:var(--gray-400); border-radius:50%; margin-right:4px;"></span>지역 평균 <b>{{ "{:,}".format(region_avg) }}만</b> ({{ region_cnt }}대)</span>
+                </div>
+                {% endif %}
+
             </div>
-        </div>
+        </div><!-- /detail-card -->
+        </div><!-- /col-lg-6 -->
 
     </div>
 </div>

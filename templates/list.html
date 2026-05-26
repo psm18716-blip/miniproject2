@@ -333,6 +333,48 @@
         }
         .car-grid.list-view .hd-model { font-size:.95rem; white-space:normal; }
         .car-grid.list-view .hd-price { font-size:1rem; }
+
+        /* ── 비교 체크박스 ─────────────────────── */
+        .compare-chk {
+            position:absolute; top:10px; left:10px;
+            width:28px; height:28px; border-radius:7px;
+            background:rgba(255,255,255,.92); border:2px solid var(--gray-300);
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; font-size:.85rem; transition:all .15s;
+            backdrop-filter:blur(4px); z-index:2; color:transparent;
+        }
+        .compare-chk.checked {
+            background:var(--blue-600); border-color:var(--blue-600); color:#fff;
+        }
+        .hd-card.selected { border-color:var(--blue-500); box-shadow:0 0 0 2px var(--blue-200); }
+
+        /* ── 비교 플로팅 바 ────────────────────── */
+        .compare-bar {
+            position:fixed; bottom:0; left:0; right:0; z-index:9999;
+            background:#1e293b; color:#fff;
+            padding:14px 2rem;
+            display:flex; align-items:center; justify-content:space-between;
+            transform:translateY(100%); transition:transform .25s ease;
+            box-shadow:0 -4px 24px rgba(0,0,0,.25);
+        }
+        .compare-bar.show { transform:translateY(0); }
+        .compare-bar-info { font-size:.9rem; font-weight:600; }
+        .compare-bar-info b { color:#60a5fa; }
+        .compare-bar-btns { display:flex; gap:10px; }
+        .compare-go {
+            background:#2563eb; color:#fff; border:none;
+            border-radius:9px; font-size:.88rem; font-weight:700;
+            padding:9px 22px; cursor:pointer; font-family:'Pretendard',sans-serif;
+            transition:background .15s;
+        }
+        .compare-go:hover { background:#1d4ed8; }
+        .compare-clear {
+            background:transparent; color:#94a3b8; border:1.5px solid #475569;
+            border-radius:9px; font-size:.88rem; font-weight:600;
+            padding:9px 16px; cursor:pointer; font-family:'Pretendard',sans-serif;
+            transition:all .15s;
+        }
+        .compare-clear:hover { color:#fff; border-color:#94a3b8; }
     </style>
 </head>
 <body>
@@ -613,6 +655,7 @@
                     <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#ccc;">🚗</div>
                     {% endif %}
 
+                    <button class="compare-chk" onclick="toggleCompare(event,{{ car.id }},this)" title="비교에 추가">✓</button>
                     <button class="like-btn" onclick="toggleLike(event,{{ car.id }})" title="찜하기">♡</button>
 
                     {% if car.photo_url %}
@@ -627,6 +670,14 @@
                     <p class="hd-meta">{{ car.year }}년 · {{ "{:,}".format(car.mileage) }}km</p>
                     <div class="hd-price-row">
                         <span class="hd-price">{{ "{:,}".format(car.price) }}만원</span>
+                        {% if car.predicted_price and car.predicted_price > 0 %}
+                            {% set gap_pct = ((car.predicted_price - car.price) / car.predicted_price * 100) | int %}
+                            {% if gap_pct >= 20 %}
+                            <span style="background:#dcfce7; color:#16a34a; font-size:.7rem; font-weight:800; padding:.15rem .55rem; border-radius:99px; white-space:nowrap;">AI시세 {{ gap_pct }}%↓</span>
+                            {% elif gap_pct >= 10 %}
+                            <span style="background:#eff6ff; color:#2563eb; font-size:.7rem; font-weight:800; padding:.15rem .55rem; border-radius:99px; white-space:nowrap;">AI시세 {{ gap_pct }}%↓</span>
+                            {% endif %}
+                        {% endif %}
                     </div>
                     <div class="hd-tags">
                         <span class="hd-tag">{{ car.region }}</span>
@@ -667,7 +718,61 @@
     </main>
 </div><!-- /.page-wrap -->
 
+<!-- 비교 플로팅 바 -->
+<div class="compare-bar" id="compareBar">
+    <div class="compare-bar-info">
+        <b id="compareCnt">0</b>/2대 선택됨 &nbsp;·&nbsp; 차량을 2대 선택하면 비교할 수 있어요
+    </div>
+    <div class="compare-bar-btns">
+        <button class="compare-clear" onclick="clearCompare()">선택 초기화</button>
+        <button class="compare-go" onclick="goCompare()">🔍 비교하기</button>
+    </div>
+</div>
+
 <script src="{{ url_for('static', filename='js/list.js') }}"></script>
+<script>
+/* ── 차량 비교 ── */
+const compareSet = new Set();
+
+function toggleCompare(e, carId, btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = btn.closest('.hd-card');
+    if (compareSet.has(carId)) {
+        compareSet.delete(carId);
+        btn.classList.remove('checked');
+        card.classList.remove('selected');
+    } else {
+        if (compareSet.size >= 2) {
+            btn.style.animation = 'none';
+            setTimeout(() => btn.style.animation = '', 100);
+            return;
+        }
+        compareSet.add(carId);
+        btn.classList.add('checked');
+        card.classList.add('selected');
+    }
+    updateCompareBar();
+}
+
+function updateCompareBar() {
+    const bar = document.getElementById('compareBar');
+    document.getElementById('compareCnt').textContent = compareSet.size;
+    bar.classList.toggle('show', compareSet.size >= 1);
+}
+
+function clearCompare() {
+    compareSet.clear();
+    document.querySelectorAll('.compare-chk.checked').forEach(b => b.classList.remove('checked'));
+    document.querySelectorAll('.hd-card.selected').forEach(c => c.classList.remove('selected'));
+    updateCompareBar();
+}
+
+function goCompare() {
+    if (compareSet.size < 2) return;
+    location.href = '/compare?ids=' + Array.from(compareSet).join(',');
+}
+</script>
 
 </body>
 </html>
