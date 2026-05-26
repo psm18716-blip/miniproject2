@@ -3,6 +3,10 @@ import pymysql
 import joblib
 import numpy as np
 import pandas as pd
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -13,13 +17,13 @@ ml_encoders = joblib.load('encoders.pkl')
 # DB 연결 함수
 def get_db():
     return pymysql.connect(
-        host='127.0.0.1',
-        port=3306,
-        database='UsedCar',
-        user='root',
-        password='dltnals0920!',
+        host=os.getenv('DB_HOST', '127.0.0.1'),
+        port=int(os.getenv('DB_PORT', 3306)),
+        database=os.getenv('DB_NAME', 'UsedCar'),
+        user=os.getenv('DB_USER', 'root'),
+        password=os.getenv('DB_PASSWORD', ''),
         charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor  # 결과를 딕셔너리로 받음
+        cursorclass=pymysql.cursors.DictCursor
     )
 
 @app.route('/')

@@ -1,0 +1,6 @@
+model.pkl
+encoders.pkl
+dedupe.py
+.env
+__pycache__/
+*.pyc

@@ -5,14 +5,18 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_absolute_error, r2_score
-import joblib  # 학습된 모델을 파일로 저장/불러오기
+import joblib
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DB_CONFIG = {
-    "host": "127.0.0.1",
-    "port": 3306,
-    "database": "UsedCar",
-    "user": "root",
-    "password": "dltnals0920!",
+    "host": os.getenv('DB_HOST', '127.0.0.1'),
+    "port": int(os.getenv('DB_PORT', 3306)),
+    "database": os.getenv('DB_NAME', 'UsedCar'),
+    "user": os.getenv('DB_USER', 'root'),
+    "password": os.getenv('DB_PASSWORD', ''),
     "charset": "utf8mb4",
 }
 
@@ -21,7 +25,7 @@ def load_data():
     with conn.cursor() as cur:
         # NULL인 연료타입은 '기타'로 채워서 데이터 최대한 활용
         cur.execute("""
-            SELECT manufacturer, model, badge,
+            SELECT manufacturer, model, badge, car_type,
                    COALESCE(fuel_type, '기타') AS fuel_type,
                    year, mileage, price
             FROM cars
@@ -42,7 +46,7 @@ def preprocess(df):
     # 문자열 컬럼을 숫자로 변환 (LabelEncoder)
     # 예: '현대' → 3, '기아' → 1 처럼 내부 숫자로 매핑
     encoders = {}
-    for col in ['manufacturer', 'model', 'badge' ,'fuel_type']:
+    for col in ['manufacturer', 'model', 'badge' ,'car_type','fuel_type']:
         le = LabelEncoder()
         df[col] = le.fit_transform(df[col].astype(str))
         encoders[col] = le  # 나중에 예측할 때 동일한 매핑 필요
@@ -58,7 +62,7 @@ def train():
     df, encoders = preprocess(df)
 
     # 3. 입력(X)과 정답(y) 분리
-    X = df[['manufacturer', 'model','badge','fuel_type', 'year', 'mileage']]
+    X = df[['manufacturer', 'model','badge','car_type','fuel_type', 'year', 'mileage']]
     # 가격을 로그 변환: 100만~1억 넓은 범위를 균등하게 만들어 정확도 향상
     y = np.log1p(df['price'])
 
