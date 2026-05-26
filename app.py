@@ -1,7 +1,14 @@
 from flask import Flask, render_template, request
 import pymysql
+import joblib
+import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
+
+
+ml_model    = joblib.load('model.pkl')
+ml_encoders = joblib.load('encoders.pkl')
 
 # DB 연결 함수
 def get_db():
@@ -54,6 +61,7 @@ def car_list():
     price_max     = request.args.get('price_max', '')
     mileage_min   = request.args.get('mileage_min', '')
     mileage_max   = request.args.get('mileage_max', '')
+    region        = request.args.get('region', '')
     q             = request.args.get('q', '')
     favs          = request.args.get('favs', '')
     sort          = request.args.get('sort', 'price_asc')
@@ -80,7 +88,7 @@ def car_list():
             conditions = ['1=0']
             params = []
     else:
-        conditions = ['price > 50']
+        conditions = ['price > 50', 'price NOT IN (9990, 9999)', 'price < 99000']
         params = []
 
         if manufacturer:
@@ -99,6 +107,8 @@ def car_list():
             conditions.append('mileage >= %s');      params.append(mileage_min)
         if mileage_max:
             conditions.append('mileage <= %s');      params.append(mileage_max)
+        if region:
+            conditions.append('region = %s');        params.append(region)
         if q:
             # 브랜드명, 모델명, 배지(세부모델) 모두 포함 검색
             conditions.append('(manufacturer LIKE %s OR model LIKE %s OR badge LIKE %s)')
@@ -137,7 +147,7 @@ def car_list():
                            fuel_type=fuel_type, year_min=year_min, year_max=year_max,
                            price_min=price_min, price_max=price_max,
                            mileage_min=mileage_min, mileage_max=mileage_max,
-                           q=q, favs=favs, sort=sort)
+                           q=q, favs=favs, sort=sort, region=region)
 
 
 
@@ -148,7 +158,7 @@ def analysis():
         # 브랜드별 평균 시세 + 매물 수 (상위 10개)
         cur.execute("""
             SELECT manufacturer, ROUND(AVG(price)) as avg_price, COUNT(*) as cnt
-            FROM cars WHERE price > 50
+            FROM cars WHERE price > 50 AND price NOT IN (9990, 9999) AND price < 99000
             GROUP BY manufacturer ORDER BY cnt DESC LIMIT 10
         """)
         brand_stats = cur.fetchall()
@@ -156,7 +166,7 @@ def analysis():
         # 연식별 전체 평균 시세 (2010년 이후)
         cur.execute("""
             SELECT year, ROUND(AVG(price)) as avg_price, COUNT(*) as cnt
-            FROM cars WHERE price > 50 AND year >= 2010
+            FROM cars WHERE price > 50 AND price NOT IN (9990, 9999) AND price < 99000 AND year >= 2010
             GROUP BY year ORDER BY year
         """)
         year_stats = cur.fetchall()
@@ -164,7 +174,7 @@ def analysis():
         # 연료 타입별 매물 수
         cur.execute("""
             SELECT fuel_type, COUNT(*) as cnt
-            FROM cars WHERE price > 50 AND fuel_type IS NOT NULL
+            FROM cars WHERE price > 50 AND price NOT IN (9990, 9999) AND price < 99000 AND fuel_type IS NOT NULL
             GROUP BY fuel_type ORDER BY cnt DESC
         """)
         fuel_stats = cur.fetchall()
@@ -182,7 +192,7 @@ def analysis():
                 END as label,
                 COUNT(*) as cnt,
                 MIN(price) as min_p
-            FROM cars WHERE price > 50
+            FROM cars WHERE price > 50 AND price NOT IN (9990, 9999) AND price < 99000
             GROUP BY label ORDER BY min_p
         """)
         price_dist = cur.fetchall()
@@ -190,7 +200,7 @@ def analysis():
         # 국산 vs 수입 요약
         cur.execute("""
             SELECT car_type, ROUND(AVG(price)) as avg_price, COUNT(*) as cnt
-            FROM cars WHERE price > 50
+            FROM cars WHERE price > 50 AND price NOT IN (9990, 9999) AND price < 99000
             GROUP BY car_type
         """)
         type_stats = cur.fetchall()
@@ -199,7 +209,7 @@ def analysis():
         cur.execute("""
             SELECT COUNT(*) as total, ROUND(AVG(price)) as avg_price,
                    MIN(price) as min_price, MAX(price) as max_price
-            FROM cars WHERE price > 50
+            FROM cars WHERE price > 50 AND price NOT IN (9990, 9999) AND price < 99000
         """)
         summary = cur.fetchone()
     conn.close()
@@ -223,14 +233,179 @@ def car_detail(car_id):
         cur.execute("""
             SELECT year, ROUND(AVG(price)) as avg_price
             FROM cars
-            WHERE model = %s AND price > 0
+            WHERE model = %s AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
             GROUP BY year
             ORDER BY year
             """, (car['model'],))
         chart_data = cur.fetchall()
     conn.close()
 
-    return render_template('detail.html', car=car, chart_data=chart_data)
+    # AI 예측 시세
+    ai_price = None
+    try:
+        mfr_enc   = ml_encoders['manufacturer'].transform([car['manufacturer']])[0]
+        mdl_enc   = ml_encoders['model'].transform([car['model']])[0]
+        fuel_enc  = ml_encoders['fuel_type'].transform([car['fuel_type'] or '기타'])[0]
+        badge_val = str(car['badge']) if car['badge'] else 'None'
+        badge_enc = ml_encoders['badge'].transform([badge_val])[0]
+        X = pd.DataFrame([[mfr_enc, mdl_enc, fuel_enc, car['year'], car['mileage'], badge_enc]],
+                          columns=['manufacturer', 'model', 'fuel_type', 'year', 'mileage', 'badge'])
+        ai_price = int(np.expm1(ml_model.predict(X)[0]))
+    except Exception:
+        pass
+
+    return render_template('detail.html', car=car, chart_data=chart_data, ai_price=ai_price)
+
+@app.route('/api/models')
+def api_models():
+    from flask import jsonify
+    manufacturer = request.args.get('manufacturer', '')
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT DISTINCT model FROM cars
+            WHERE manufacturer = %s
+            ORDER BY model
+        """, (manufacturer,))
+        models = [r['model'] for r in cur.fetchall()]
+    conn.close()
+    return jsonify(models)
+
+
+@app.route('/api/badges')
+def api_badges():
+    from flask import jsonify
+    manufacturer = request.args.get('manufacturer', '')
+    model        = request.args.get('model', '')
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT DISTINCT badge FROM cars
+            WHERE manufacturer = %s AND model = %s AND badge IS NOT NULL
+            ORDER BY badge
+        """, (manufacturer, model))
+        badges = [r['badge'] for r in cur.fetchall()]
+    conn.close()
+    return jsonify(badges)
+
+
+@app.route('/predict', methods=['GET', 'POST'])
+def predict():
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("SELECT DISTINCT manufacturer FROM cars ORDER BY manufacturer")
+        manufacturers = [r['manufacturer'] for r in cur.fetchall()]
+        
+        cur.execute("SELECT DISTINCT fuel_type FROM cars WHERE fuel_type IS NOT NULL ORDER BY fuel_type")
+        fuel_types = [r['fuel_type'] for r in cur.fetchall()]
+    conn.close()
+
+    result = None  # 아직 예측 전
+
+    if request.method == 'POST':
+        manufacturer = request.form.get('manufacturer')
+        model_name   = request.form.get('model')
+        badge        = request.form.get('badge')
+        fuel_type    = request.form.get('fuel_type')
+        print(f"[DEBUG] mfr={manufacturer}, model={model_name}, badge={badge}, fuel={fuel_type}")
+        year         = int(request.form.get('year'))
+        mileage      = int(request.form.get('mileage'))
+
+        try:
+            mfr_enc   = ml_encoders['manufacturer'].transform([manufacturer])[0]
+            mdl_enc   = ml_encoders['model'].transform([model_name])[0]
+            badge_enc = ml_encoders['badge'].transform([badge])[0]
+            fuel_enc  = ml_encoders['fuel_type'].transform([fuel_type])[0]
+
+            X = pd.DataFrame([[mfr_enc, mdl_enc, fuel_enc, year, mileage, badge_enc]],
+                              columns=['manufacturer', 'model', 'fuel_type', 'year', 'mileage', 'badge'])
+            pred_log   = ml_model.predict(X)[0]
+            pred_price = int(np.expm1(pred_log)) # 학습 때 log 변환 > 예측값도 역변환
+
+            # DB에서 같은 모델의 실제 평균 시세 조회 (비교용)
+            conn2 = get_db()
+            with conn2.cursor() as cur:
+                cur.execute("""
+                    SELECT ROUND(AVG(price)) as avg_price, COUNT(*) as cnt
+                    FROM cars
+                    WHERE manufacturer = %s AND model = %s AND badge = %s
+                      AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
+                """, (manufacturer, model_name, badge))
+                db_stat = cur.fetchone()
+            conn2.close()
+
+            result = {
+                'price':     pred_price,
+                'avg_price': int(db_stat['avg_price']) if db_stat['avg_price'] else None,
+                'cnt':       db_stat['cnt'],
+            }
+
+        except (ValueError, KeyError) as e:
+            print(f"[DEBUG] 예측 오류: {e}")
+            result = {'error': f'예측 실패: {e}'}
+
+    return render_template('predict.html',
+                           manufacturers=manufacturers,
+                           fuel_types=fuel_types,
+                           result=result)
+
+
+@app.route('/api/region-stats')
+def api_region_stats():
+    from flask import jsonify
+    manufacturer = request.args.get('manufacturer', '')
+    model        = request.args.get('model', '')
+    conn = get_db()
+    with conn.cursor() as cur:
+        if manufacturer and model:
+            cur.execute("""
+                SELECT region, COUNT(*) as cnt, ROUND(AVG(price)) as avg_price
+                FROM cars
+                WHERE region IS NOT NULL
+                  AND manufacturer = %s AND model = %s
+                  AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
+                GROUP BY region ORDER BY avg_price
+            """, (manufacturer, model))
+        elif manufacturer:
+            cur.execute("""
+                SELECT region, COUNT(*) as cnt, ROUND(AVG(price)) as avg_price
+                FROM cars
+                WHERE region IS NOT NULL AND manufacturer = %s
+                  AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
+                GROUP BY region ORDER BY avg_price
+            """, (manufacturer,))
+        else:
+            cur.execute("""
+                SELECT region, COUNT(*) as cnt, ROUND(AVG(price)) as avg_price
+                FROM cars
+                WHERE region IS NOT NULL
+                  AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
+                GROUP BY region ORDER BY avg_price
+            """)
+        stats = cur.fetchall()
+    conn.close()
+    return jsonify(stats)
+
+
+@app.route('/region')
+def region():
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT region, COUNT(*) as cnt, ROUND(AVG(price)) as avg_price,
+                   MIN(price) as min_price, MAX(price) as max_price
+            FROM cars
+            WHERE region IS NOT NULL
+              AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
+            GROUP BY region
+            ORDER BY cnt DESC
+        """)
+        region_stats = cur.fetchall()
+        cur.execute("SELECT DISTINCT manufacturer FROM cars ORDER BY manufacturer")
+        manufacturers = [r['manufacturer'] for r in cur.fetchall()]
+    conn.close()
+    return render_template('region.html', region_stats=region_stats, manufacturers=manufacturers)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

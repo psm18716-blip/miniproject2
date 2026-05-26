@@ -10,11 +10,14 @@
 <body>
 
 <!-- ── 네비게이션 바 ──────────────────────────── -->
-<nav class="navbar">
+<nav class="navbar" style="justify-content:space-between;">
     <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
-    <div style="display:flex; align-items:center; gap:16px;">
-        <a href="/analysis" style="font-size:.83rem; color:var(--blue-600); font-weight:700; text-decoration:none;">📊 시세분석</a>
-        <a href="javascript:history.back()" style="font-size:0.88rem; color:var(--gray-500); font-weight:600;">← 목록으로</a>
+    <div class="nav-tab-group">
+        <a href="/" class="nav-tab">홈</a>
+        <a href="/list" class="nav-tab">매물</a>
+        <a href="/region" class="nav-tab">🗺️ 지역별</a>
+        <a href="/analysis" class="nav-tab">📊 시세분석</a>
+        <a href="/predict" class="nav-tab">🤖 AI 예측</a>
     </div>
 </nav>
 
@@ -42,6 +45,27 @@
                 <p class="detail-badge">{{ car.badge }}</p>
                 <h1 class="detail-model">{{ car.model }}</h1>
                 <p class="detail-price">{{ "{:,}".format(car.price) }}만원</p>
+
+                {% if ai_price %}
+                {% set diff = car.price - ai_price %}
+                {% set pct = ((diff / ai_price) * 100) | abs | round(1) %}
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
+                    <span style="font-size:.82rem; color:var(--gray-500);">AI 예측 시세 <b style="color:var(--gray-700);">{{ "{:,}".format(ai_price) }}만원</b></span>
+                    {% if diff < 0 %}
+                    <span style="background:#dcfce7; color:#16a34a; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">
+                        시세보다 {{ "{:,}".format(-diff) }}만원 ({{ pct }}%) 저렴
+                    </span>
+                    {% elif diff > 0 %}
+                    <span style="background:#fef2f2; color:#dc2626; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">
+                        시세보다 {{ "{:,}".format(diff) }}만원 ({{ pct }}%) 비쌈
+                    </span>
+                    {% else %}
+                    <span style="background:#f3f4f6; color:#6b7280; font-size:.78rem; font-weight:700; padding:.25rem .7rem; border-radius:99px;">
+                        시세와 동일
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
 
                 <table class="detail-table w-100">
                     <tr>

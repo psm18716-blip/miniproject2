@@ -338,12 +338,14 @@
 <body>
 
 <!-- ── 네비게이션 바 ──────────────────────────── -->
-<nav class="navbar" style="padding:0 1.5rem;">
-    <a href="/" class="navbar-brand" style="color:#111;">🚗 Car<span style="color:#2563eb;">Market</span></a>
-    <span style="font-size:.95rem; font-weight:700; color:var(--gray-900);">{{ manufacturer or (q and '검색: ' ~ q) or '전체' }}</span>
-    <div style="display:flex; align-items:center; gap:16px;">
-        <a href="/analysis" style="font-size:.83rem; color:var(--blue-600); font-weight:700; text-decoration:none;">📊 시세분석</a>
-        <a href="javascript:history.back()" style="font-size:.83rem; color:var(--gray-400); font-weight:600; text-decoration:none;">← 뒤로</a>
+<nav class="navbar" style="justify-content:space-between;">
+    <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
+    <div class="nav-tab-group">
+        <a href="/" class="nav-tab">홈</a>
+        <a href="/list" class="nav-tab active">매물</a>
+        <a href="/region" class="nav-tab">🗺️ 지역별</a>
+        <a href="/analysis" class="nav-tab">📊 시세분석</a>
+        <a href="/predict" class="nav-tab">🤖 AI 예측</a>
     </div>
 </nav>
 

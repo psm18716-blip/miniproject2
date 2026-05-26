@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지역별 시세 – CarMarket</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        html, body { height: 100%; overflow: hidden; }
+        body { display: flex; flex-direction: column; }
+
+        .filter-bar { flex-shrink: 0; }
+
+        .region-wrap {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* 지도 영역 */
+        #map {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 오른쪽 패널 */
+        .region-panel {
+            width: 320px;
+            flex-shrink: 0;
+            background: #fff;
+            border-left: 1.5px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 1.2rem 1.4rem 1rem;
+            border-bottom: 1.5px solid var(--gray-100);
+        }
+        .panel-header h2 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin: 0 0 .2rem;
+        }
+        .panel-header p {
+            font-size: .78rem;
+            color: var(--gray-400);
+            margin: 0;
+        }
+        .region-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: .6rem 0;
+        }
+        .region-item {
+            display: flex;
+            align-items: center;
+            padding: .75rem 1.4rem;
+            cursor: pointer;
+            transition: background .12s;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .region-item:hover {
+            background: var(--gray-50);
+        }
+        .region-item.active {
+            background: #eff6ff;
+        }
+        .region-rank {
+            font-size: .75rem;
+            font-weight: 700;
+            color: var(--gray-400);
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .region-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .region-info { flex: 1; min-width: 0; }
+        .region-name {
+            font-size: .9rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .region-cnt {
+            font-size: .75rem;
+            color: var(--gray-400);
+            margin-top: 1px;
+        }
+        .region-price {
+            font-size: .92rem;
+            font-weight: 800;
+            color: var(--blue-600);
+            white-space: nowrap;
+        }
+
+        /* 슬라이드 아웃 애니메이션 */
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to   { transform: translateX(-60px); opacity: 0; }
+        }
+        .slide-out {
+            animation: slideOut .3s ease-in forwards;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar" style="justify-content:space-between;">
+    <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
+    <div class="nav-tab-group">
+        <a href="/" class="nav-tab">홈</a>
+        <a href="/list" class="nav-tab">매물</a>
+        <a href="/region" class="nav-tab active">🗺️ 지역별</a>
+        <a href="/analysis" class="nav-tab">📊 시세분석</a>
+        <a href="/predict" class="nav-tab">🤖 AI 예측</a>
+    </div>
+</nav>
+
+<!-- 차종 필터 바 -->
+<div class="filter-bar" style="background:#fff; border-bottom:1.5px solid var(--gray-100); padding:.7rem 1.4rem; display:flex; align-items:center; gap:12px;">
+    <span style="font-size:.82rem; font-weight:700; color:var(--gray-600); white-space:nowrap;">차종 비교</span>
+    <select id="filter-mfr" class="form-select form-select-sm" style="max-width:140px;">
+        <option value="">전체 브랜드</option>
+        {% for m in manufacturers %}
+        <option value="{{ m }}">{{ m }}</option>
+        {% endfor %}
+    </select>
+    <select id="filter-model" class="form-select form-select-sm" style="max-width:180px;">
+        <option value="">전체 모델</option>
+    </select>
+    <span id="filter-label" style="font-size:.8rem; color:var(--gray-400);"></span>
+</div>
+
+<div class="region-wrap">
+    <div id="map"></div>
+
+    <div class="region-panel">
+        <div class="panel-header">
+            <h2>지역별 평균 시세</h2>
+            <p>지역을 클릭하면 해당 매물을 볼 수 있어요</p>
+            <div style="display:flex; gap:6px; margin-top:.6rem;">
+                <button id="sort-cnt" onclick="setSort('cnt')" class="sort-btn active" style="font-size:.75rem; padding:.2rem .7rem; border-radius:99px; border:1.5px solid var(--blue-600); background:var(--blue-600); color:#fff; cursor:pointer; font-weight:700;">매물 많은 순</button>
+                <button id="sort-price" onclick="setSort('price')" class="sort-btn" style="font-size:.75rem; padding:.2rem .7rem; border-radius:99px; border:1.5px solid var(--gray-200); background:#fff; color:var(--gray-600); cursor:pointer; font-weight:700;">가격 낮은 순</button>
+            </div>
+        </div>
+        <div class="region-list">
+            {% for r in region_stats %}
+            <a class="region-item" href="#" data-region="{{ r.region }}" onclick="goRegion('{{ r.region }}', this); return false;">
+                <span class="region-rank">{{ loop.index }}</span>
+                {% set hue = [0, 120 - (r.avg_price // 80)] | max %}
+                <span class="region-dot" style="background: hsl({{ hue }}, 70%, 45%)"></span>
+                <div class="region-info">
+                    <div class="region-name">{{ r.region }}</div>
+                    <div class="region-cnt">매물 {{ "{:,}".format(r.cnt) }}건</div>
+                </div>
+                <span class="region-price">{{ "{:,}".format(r.avg_price) }}만</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// 시도별 좌표
+const COORDS = {
+    '서울': [37.5665, 126.9780],
+    '경기': [37.4138, 127.5183],
+    '인천': [37.4563, 126.7052],
+    '부산': [35.1796, 129.0756],
+    '대구': [35.8714, 128.6014],
+    '광주': [35.1595, 126.8526],
+    '대전': [36.3504, 127.3845],
+    '울산': [35.5384, 129.3114],
+    '경남': [35.4606, 128.2132],
+    '경북': [36.4919, 128.8889],
+    '전북': [35.7175, 127.1530],
+    '전남': [34.8679, 126.9910],
+    '충남': [36.5184, 126.8000],
+    '충북': [36.6357, 127.4914],
+    '강원': [37.8228, 128.1555],
+    '세종': [36.4801, 127.2890],
+    '제주': [33.4996, 126.5312],
+};
+
+// 지역 데이터 (Jinja에서 주입)
+const REGION_DATA = [
+    {% for r in region_stats %}
+    { region: "{{ r.region }}", cnt: {{ r.cnt }}, avg_price: {{ r.avg_price }} },
+    {% endfor %}
+];
+
+// 지도 초기화 — 제주도 포함 전국 범위로 자동 맞춤
+const map = L.map('map', { zoomControl: true });
+map.fitBounds([[33.0, 124.5], [38.7, 131.0]]);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 13,
+}).addTo(map);
+
+// 최대 매물 수 (마커 크기 비례용)
+const maxCnt = Math.max(...REGION_DATA.map(d => d.cnt));
+const maxPrice = Math.max(...REGION_DATA.map(d => d.avg_price));
+
+function priceColor(avg_price) {
+    // 저렴 → 초록(120), 비쌈 → 빨강(0)
+    const ratio = avg_price / maxPrice;
+    const hue = Math.round(120 - ratio * 120);
+    return `hsl(${hue}, 70%, 45%)`;
+}
+
+const markers = {};
+
+REGION_DATA.forEach(d => {
+    const coord = COORDS[d.region];
+    if (!coord) return;
+
+    const r = 18 + Math.round((d.cnt / maxCnt) * 30); // 반지름 18~48px
+
+    const circle = L.circleMarker(coord, {
+        radius: r,
+        fillColor: priceColor(d.avg_price),
+        color: '#fff',
+        weight: 2.5,
+        opacity: 1,
+        fillOpacity: 0.82,
+    }).addTo(map);
+
+    circle.bindTooltip(
+        `<b>${d.region}</b><br>${d.avg_price.toLocaleString()}만원<br>매물 ${d.cnt.toLocaleString()}건`,
+        { direction: 'top', offset: [0, -r] }
+    );
+
+    circle.on('click', () => goRegion(d.region, null));
+    markers[d.region] = circle;
+});
+
+// 정렬 상태
+let currentSort = 'cnt';
+let lastData = REGION_DATA;
+
+function setSort(sort) {
+    currentSort = sort;
+    document.getElementById('sort-cnt').style.cssText   = sort === 'cnt'   ? 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--blue-600);background:var(--blue-600);color:#fff;cursor:pointer;font-weight:700;' : 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;font-weight:700;';
+    document.getElementById('sort-price').style.cssText = sort === 'price' ? 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--blue-600);background:var(--blue-600);color:#fff;cursor:pointer;font-weight:700;' : 'font-size:.75rem;padding:.2rem .7rem;border-radius:99px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;font-weight:700;';
+    renderList(lastData);
+}
+
+function renderList(data) {
+    if (!data.length) return;
+    const maxP = Math.max(...data.map(d => d.avg_price));
+    const sorted = currentSort === 'cnt'
+        ? [...data].sort((a, b) => b.cnt - a.cnt)
+        : [...data].sort((a, b) => a.avg_price - b.avg_price);
+    const list = document.querySelector('.region-list');
+    list.innerHTML = sorted.map((d, i) => {
+        const ratio = d.avg_price / maxP;
+        const hue = Math.round(120 - ratio * 120);
+        return `<a class="region-item" href="#" onclick="goRegion('${d.region}', this); return false;">
+            <span class="region-rank">${i + 1}</span>
+            <span class="region-dot" style="background:hsl(${hue},70%,45%)"></span>
+            <div class="region-info">
+                <div class="region-name">${d.region}</div>
+                <div class="region-cnt">매물 ${d.cnt.toLocaleString()}건</div>
+            </div>
+            <span class="region-price">${d.avg_price.toLocaleString()}만</span>
+        </a>`;
+    }).join('');
+}
+
+// 브랜드/모델 필터
+const filterMfr   = document.getElementById('filter-mfr');
+const filterModel = document.getElementById('filter-model');
+const filterLabel = document.getElementById('filter-label');
+
+filterMfr.addEventListener('change', () => {
+    const mfr = filterMfr.value;
+    filterModel.innerHTML = '<option value="">전체 모델</option>';
+    if (mfr) {
+        fetch(`/api/models?manufacturer=${encodeURIComponent(mfr)}`)
+            .then(r => r.json())
+            .then(models => {
+                models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m; opt.textContent = m;
+                    filterModel.appendChild(opt);
+                });
+            });
+    }
+    updateMap();
+});
+
+filterModel.addEventListener('change', updateMap);
+
+function updateMap() {
+    const mfr   = filterMfr.value;
+    const model = filterModel.value;
+    let url = '/api/region-stats';
+    const params = [];
+    if (mfr)   params.push(`manufacturer=${encodeURIComponent(mfr)}`);
+    if (model) params.push(`model=${encodeURIComponent(model)}`);
+    if (params.length) url += '?' + params.join('&');
+
+    filterLabel.textContent = model ? `"${model}" 지역별 평균시세` : mfr ? `"${mfr}" 지역별 평균시세` : '';
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) return;
+            const maxP = Math.max(...data.map(d => d.avg_price));
+            const maxC = Math.max(...data.map(d => d.cnt));
+            const activeRegions = new Set(data.map(d => d.region));
+
+            // 데이터 없는 지역 마커 숨기기, 있는 지역만 업데이트
+            Object.entries(markers).forEach(([region, m]) => {
+                if (!activeRegions.has(region)) {
+                    m.setStyle({ fillOpacity: 0, opacity: 0 });
+                    m.off('click');
+                } else {
+                    m.setStyle({ fillOpacity: 0.82, opacity: 1 });
+                }
+            });
+
+            data.forEach(d => {
+                const m = markers[d.region];
+                if (!m) return;
+                const r = 18 + Math.round((d.cnt / maxC) * 30);
+                const ratio = d.avg_price / maxP;
+                const hue = Math.round(120 - ratio * 120);
+                m.setRadius(r);
+                m.setStyle({ fillColor: `hsl(${hue},70%,45%)`, fillOpacity: 0.82, opacity: 1 });
+                m.setTooltipContent(`<b>${d.region}</b><br>${d.avg_price.toLocaleString()}만원<br>매물 ${d.cnt.toLocaleString()}건`);
+                m.off('click');
+                m.on('click', () => goRegion(d.region, null));
+            });
+
+            // 오른쪽 패널 업데이트
+            lastData = data;
+            renderList(data);
+        });
+}
+
+// 지역 이동 — 선택된 브랜드/모델도 함께 전달
+function goRegion(region, listEl) {
+    document.querySelectorAll('.region-item').forEach(el => el.classList.remove('active'));
+    if (listEl) listEl.classList.add('active');
+
+    Object.entries(markers).forEach(([r, m]) => {
+        m.setStyle({ weight: r === region ? 4 : 2.5, color: r === region ? '#2563eb' : '#fff' });
+    });
+
+    const mfr   = filterMfr.value;
+    const model = filterModel.value;
+    const qs = new URLSearchParams({ region });
+    if (mfr)   qs.set('manufacturer', mfr);
+    if (model) qs.set('model', model);  // list.html에서 model 필터는 q(검색)로 처리
+    // model은 q 검색으로 넘김 (list 라우트에 model 필터 없음)
+    const qsFinal = new URLSearchParams({ region });
+    if (mfr)   qsFinal.set('manufacturer', mfr);
+    if (model) qsFinal.set('q', model);
+
+    document.querySelector('.region-wrap').classList.add('slide-out');
+    setTimeout(() => {
+        window.location.href = `/list?${qsFinal.toString()}`;
+    }, 280);
+}
+
+// 초기 리스트를 renderList로 그려야 정렬 버튼이 동작함
+renderList(lastData);
+
+// 뒤로가기로 돌아올 때 bfcache 새로고침
+window.addEventListener('pageshow', e => {
+    if (e.persisted) window.location.reload();
+});
+</script>
+</body>
+</html>

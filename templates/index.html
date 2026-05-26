@@ -233,13 +233,14 @@
 <body>
 
 <!-- ── 네비게이션 바 ──────────────────────────── -->
-<nav class="navbar">
-    <span class="navbar-brand" style="color:#111;">🚗 Car<span style="color:#2563eb;">Market</span></span>
+<nav class="navbar" style="justify-content:space-between;">
+    <a href="/" class="navbar-brand">🚗 Car<span>Market</span></a>
     <div class="nav-tab-group">
-        <a href="/" class="nav-tab {{ 'active' if not car_type }}">전체</a>
-        <a href="/?car_type=국산" class="nav-tab {{ 'active' if car_type == '국산' }}">국산</a>
-        <a href="/?car_type=수입" class="nav-tab {{ 'active' if car_type == '수입' }}">수입</a>
+        <a href="/" class="nav-tab active">홈</a>
+        <a href="/list" class="nav-tab">매물</a>
+        <a href="/region" class="nav-tab">🗺️ 지역별</a>
         <a href="/analysis" class="nav-tab">📊 시세분석</a>
+        <a href="/predict" class="nav-tab">🤖 AI 예측</a>
     </div>
 </nav>
 
