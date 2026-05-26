@@ -72,7 +72,6 @@
         .main-area { flex:1; min-width:0; }
 
         /* ── 필터 바 ───────────────────────────── */
-        /* overflow: visible 이어야 드롭다운이 잘리지 않음 */
         .filter-bar {
             position:sticky; top:60px; z-index:90;
             background:#fff; border-bottom:1px solid var(--gray-200);
@@ -81,7 +80,6 @@
         .filter-bar-inner {
             display:flex; align-items:center; gap:7px;
             overflow-x:auto; scrollbar-width:none;
-            /* overflow:auto여도 드롭다운은 fixed로 처리 */
         }
         .filter-bar-inner::-webkit-scrollbar { display:none; }
 
@@ -128,7 +126,7 @@
         /* ── 드롭다운 패널 (fixed 포지션) ────────── */
         .drop-panel {
             display:none;
-            position:fixed; /* fixed로 필터 바 overflow와 무관하게 렌더 */
+            position:fixed;
             min-width:220px;
             background:#fff; border:1.5px solid var(--gray-200);
             border-radius:14px;
@@ -230,21 +228,21 @@
         /* ── 카드 그리드 ────────────────────────── */
         .car-grid {
             display:grid; grid-template-columns:repeat(2,1fr);
-            gap:14px;                     /* 1px → 14px 여백 */
-            background:transparent;       /* 회색 배경 제거 */
+            gap:14px;
+            background:transparent;
             border-top:none;
-            padding:14px 1.5rem 0;        /* 그리드 바깥 여백 */
+            padding:14px 1.5rem 0;
         }
         .car-grid.g3 { grid-template-columns:repeat(3,1fr); }
         .car-grid.g3 .hd-img  { height:160px; }
-        .car-grid.g3 .hd-model { font-size:.88rem; }
+        .car-grid.g3 .hd-model { font-size:.95rem; }
         .car-grid.g3 .hd-price { font-size:1rem; }
 
         /* ── 2열/3열 카드 ──────────────────────── */
         .hd-card {
             background:#fff; display:block; text-decoration:none;
             color:inherit; cursor:pointer; transition:all .2s;
-            border-radius:14px;           /* 둥근 모서리 */
+            border-radius:14px;
             border:1.5px solid var(--gray-200);
             overflow:hidden;
         }
@@ -256,16 +254,23 @@
         .hd-card.fav-hidden { display:none; }
 
         .hd-img {
-            position:relative; width:100%; height:200px;
+            position:relative; width:100%; height:240px;
             overflow:hidden;
-            background:#f5f5f5;           /* 연한 배경 */
+            background:#f5f5f5;
+        }
+        .hd-img-blur {
+            position:absolute; inset:0;
+            background-size:cover; background-position:center;
+            filter:blur(18px);
+            transform:scale(1.15);
+            opacity:.55;
         }
         .hd-img img {
+            position:relative; z-index:1;
             width:100%; height:100%;
-            object-fit:contain;           /* cover → contain (차 전체 표시) */
+            object-fit:contain;
             object-position:center;
             transition:transform .3s ease;
-            padding:8px 0;               /* 위아래 여백 */
         }
         .hd-card:hover .hd-img img { transform:scale(1.04); }
 
@@ -276,6 +281,7 @@
             font-size:1rem; cursor:pointer; display:flex;
             align-items:center; justify-content:center;
             transition:transform .15s; backdrop-filter:blur(4px);
+            z-index:2;
         }
         .like-btn:hover { transform:scale(1.15); }
         .like-btn.liked { color:#ef4444; }
@@ -289,6 +295,7 @@
         .inner-thumb img { width:100%; height:100%; object-fit:cover; }
 
         .hd-body { padding:12px 14px 15px; }
+        .hd-maker { font-size:.72rem; font-weight:700; color:var(--blue-600); letter-spacing:.04em; margin-bottom:2px; }
         .hd-model {
             font-size:.95rem; font-weight:800; color:var(--gray-900);
             letter-spacing:-.3px; margin-bottom:2px;
@@ -321,7 +328,7 @@
             box-shadow:0 6px 18px rgba(0,0,0,.08);
         }
         .car-grid.list-view .hd-img {
-            width:160px; height:120px; flex-shrink:0;
+            width:220px; height:150px; flex-shrink:0;
             border-radius:0; background:#f5f5f5;
         }
         .car-grid.list-view .hd-img img { padding:4px; }
@@ -457,6 +464,7 @@
         <input type="hidden" name="manufacturer" value="{{ manufacturer }}">
         <input type="hidden" name="page" value="1">
         <input type="hidden" name="q" value="{{ q or '' }}">
+        <input type="hidden" name="car_type_filter" value="{{ car_type_filter or '' }}">
 
         <!-- 필터 바 -->
         <div class="filter-bar">
@@ -508,7 +516,6 @@
                     </button>
                 </div>
 
-
             </div><!-- /.filter-bar-inner -->
         </div><!-- /.filter-bar -->
 
@@ -548,8 +555,7 @@
         </div>
         {% endif %}
 
-        <!-- 드롭다운 패널들 (body 레벨 fixed 위치) -->
-        <!-- 연식 패널 -->
+        <!-- 드롭다운 패널들 -->
         <div class="drop-panel" id="dropYear">
             <div class="drop-title">연식</div>
             <div class="drop-range">
@@ -563,7 +569,6 @@
             </div>
         </div>
 
-        <!-- 주행거리 패널 -->
         <div class="drop-panel" id="dropMileage">
             <div class="drop-title">주행거리 (km)</div>
             <div class="drop-range">
@@ -577,7 +582,6 @@
             </div>
         </div>
 
-        <!-- 가격 패널 -->
         <div class="drop-panel" id="dropPrice">
             <div class="drop-title">가격 (만원)</div>
             <div class="drop-range">
@@ -591,7 +595,6 @@
             </div>
         </div>
 
-        <!-- 연료 패널 -->
         <div class="drop-panel" id="dropFuel" style="min-width:170px;">
             <div class="drop-title">연료</div>
             {% for fuel in ['가솔린','디젤','전기','LPG(일반인 구입)','가솔린+전기'] %}
@@ -610,7 +613,6 @@
             </label>
         </div>
 
-
         </form><!-- /#filterForm -->
 
         <!-- ── 결과 바 ───────────────────────── -->
@@ -623,15 +625,16 @@
             </div>
             <div class="result-right">
                 <select class="sort-select" onchange="applySort(this.value)">
+                    <option value="recommend"   {{ 'selected' if sort == 'recommend' }}>추천순</option>
                     <option value="price_asc"   {{ 'selected' if sort == 'price_asc' }}>가격 낮은 순</option>
                     <option value="price_desc"  {{ 'selected' if sort == 'price_desc' }}>가격 높은 순</option>
                     <option value="year_desc"   {{ 'selected' if sort == 'year_desc' }}>연식 최신 순</option>
                     <option value="mileage_asc" {{ 'selected' if sort == 'mileage_asc' }}>주행거리 짧은 순</option>
                 </select>
                 <div class="view-btns">
-                    <button class="vbtn on" id="v2" onclick="setView(2)" title="2열">⊞</button>
+                    <button class="vbtn"    id="v2" onclick="setView(2)" title="2열">⊞</button>
                     <button class="vbtn"    id="v3" onclick="setView(3)" title="3열">⊟</button>
-                    <button class="vbtn"    id="vl" onclick="setView('l')" title="리스트">☰</button>
+                    <button class="vbtn on" id="vl" onclick="setView('l')" title="리스트">☰</button>
                 </div>
             </div>
         </div>
@@ -645,11 +648,12 @@
             <a href="/list" style="display:inline-block; margin-top:1.5rem; background:var(--blue-600); color:#fff; border-radius:8px; padding:10px 24px; font-weight:700; font-size:0.88rem; text-decoration:none;">전체 목록 보기</a>
         </div>
         {% else %}
-        <div class="car-grid" id="carGrid">
+        <div class="car-grid list-view" id="carGrid">
             {% for car in cars %}
             <a href="/car/{{ car.id }}" class="hd-card" data-id="{{ car.id }}">
                 <div class="hd-img">
                     {% if car.photo_url %}
+                    <div class="hd-img-blur" style="background-image:url('{{ car.photo_url }}')"></div>
                     <img src="{{ car.photo_url }}" alt="{{ car.model }}">
                     {% else %}
                     <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#ccc;">🚗</div>
@@ -666,10 +670,23 @@
                 </div>
 
                 <div class="hd-body">
+                    <p class="hd-maker">{{ car.manufacturer }}</p>
                     <p class="hd-model">{{ car.model }} {{ car.badge }}</p>
                     <p class="hd-meta">{{ car.year }}년 · {{ "{:,}".format(car.mileage) }}km</p>
                     <div class="hd-price-row">
-                        <span class="hd-price">{{ "{:,}".format(car.price) }}만원</span>
+                        <span class="hd-price">
+                            {% if car.price >= 10000 %}
+                                {% set uk = (car.price // 10000) %}
+                                {% set man = (car.price % 10000) %}
+                                {% if man == 0 %}
+                                    {{ uk }}억원
+                                {% else %}
+                                    {{ uk }}억 {{ "{:,}".format(man) }}만원
+                                {% endif %}
+                            {% else %}
+                                {{ "{:,}".format(car.price) }}만원
+                            {% endif %}
+                        </span>
                         {% if car.predicted_price and car.predicted_price > 0 %}
                             {% set gap_pct = ((car.predicted_price - car.price) / car.predicted_price * 100) | int %}
                             {% if gap_pct >= 20 %}
@@ -691,7 +708,7 @@
         {% endif %}
 
         <!-- 페이지네이션 -->
-        {% set bqs = 'manufacturer=' ~ manufacturer ~ '&fuel_type=' ~ (fuel_type or '') ~ '&year_min=' ~ (year_min or '') ~ '&year_max=' ~ (year_max or '') ~ '&price_min=' ~ (price_min or '') ~ '&price_max=' ~ (price_max or '') ~ '&mileage_min=' ~ (mileage_min or '') ~ '&mileage_max=' ~ (mileage_max or '') ~ '&q=' ~ (q or '') ~ '&favs=' ~ (favs or '') ~ '&sort=' ~ (sort or 'price_asc') %}
+        {% set bqs = 'manufacturer=' ~ manufacturer ~ '&fuel_type=' ~ (fuel_type or '') ~ '&year_min=' ~ (year_min or '') ~ '&year_max=' ~ (year_max or '') ~ '&price_min=' ~ (price_min or '') ~ '&price_max=' ~ (price_max or '') ~ '&mileage_min=' ~ (mileage_min or '') ~ '&mileage_max=' ~ (mileage_max or '') ~ '&q=' ~ (q or '') ~ '&favs=' ~ (favs or '') ~ '&sort=' ~ (sort or 'recommend') ~ '&car_type_filter=' ~ (car_type_filter or '') %}
         {% set p_start = [1, page - 2]|max %}
         {% set p_end   = [total_pages, p_start + 4]|min %}
         {% set p_start = [1, p_end - 4]|max %}
@@ -729,8 +746,9 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/list.js') }}"></script>
+<script src="{{ url_for('static', filename='js/list.js') }}?v=4"></script>
 <script>
+
 /* ── 차량 비교 ── */
 const compareSet = new Set();
 
@@ -743,11 +761,7 @@ function toggleCompare(e, carId, btn) {
         btn.classList.remove('checked');
         card.classList.remove('selected');
     } else {
-        if (compareSet.size >= 2) {
-            btn.style.animation = 'none';
-            setTimeout(() => btn.style.animation = '', 100);
-            return;
-        }
+        if (compareSet.size >= 2) return;
         compareSet.add(carId);
         btn.classList.add('checked');
         card.classList.add('selected');

@@ -64,38 +64,81 @@ def index():
                 ORDER BY count DESC
             """)
         brands = cur.fetchall()
+
+        cur.execute("""
+            SELECT c.id, c.manufacturer, c.model, c.badge, c.fuel_type,
+                   c.year, c.mileage, c.price, c.region, c.photo_url
+            FROM cars c
+            JOIN (
+                SELECT model,
+                       MAX(CASE WHEN photo_url IS NOT NULL THEN id END) AS photo_id,
+                       MAX(id) AS max_id,
+                       COUNT(*) AS cnt
+                FROM cars
+                WHERE car_type = '국산'
+                  AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
+                GROUP BY model
+                ORDER BY cnt DESC
+                LIMIT 15
+            ) top ON c.id = COALESCE(top.photo_id, top.max_id)
+            ORDER BY top.cnt DESC
+        """)
+        popular_domestic = cur.fetchall()
+
+        cur.execute("""
+            SELECT c.id, c.manufacturer, c.model, c.badge, c.fuel_type,
+                   c.year, c.mileage, c.price, c.region, c.photo_url
+            FROM cars c
+            JOIN (
+                SELECT model,
+                       MAX(CASE WHEN photo_url IS NOT NULL THEN id END) AS photo_id,
+                       MAX(id) AS max_id,
+                       COUNT(*) AS cnt
+                FROM cars
+                WHERE car_type = '수입'
+                  AND price > 50 AND price NOT IN (9990, 9999) AND price < 99000
+                GROUP BY model
+                ORDER BY cnt DESC
+                LIMIT 15
+            ) top ON c.id = COALESCE(top.photo_id, top.max_id)
+            ORDER BY top.cnt DESC
+        """)
+        popular_imported = cur.fetchall()
     conn.close()
 
-    return render_template('index.html', brands=brands, car_type=car_type)
+    return render_template('index.html', brands=brands, car_type=car_type,
+                           popular_domestic=popular_domestic, popular_imported=popular_imported)
 
 
 
 
 @app.route('/list')
 def car_list():
-    manufacturer  = request.args.get('manufacturer', '')
-    fuel_type     = request.args.get('fuel_type', '')
-    year_min      = request.args.get('year_min', '')
-    year_max      = request.args.get('year_max', '')
-    price_min     = request.args.get('price_min', '')
-    price_max     = request.args.get('price_max', '')
-    mileage_min   = request.args.get('mileage_min', '')
-    mileage_max   = request.args.get('mileage_max', '')
-    region        = request.args.get('region', '')
-    q             = request.args.get('q', '')
-    favs          = request.args.get('favs', '')
-    sort          = request.args.get('sort', 'price_asc')
-    page          = int(request.args.get('page', 1))
-    per_page      = 60
-    offset        = (page - 1) * per_page
+    manufacturer    = request.args.get('manufacturer', '')
+    fuel_type       = request.args.get('fuel_type', '')
+    year_min        = request.args.get('year_min', '')
+    year_max        = request.args.get('year_max', '')
+    price_min       = request.args.get('price_min', '')
+    price_max       = request.args.get('price_max', '')
+    mileage_min     = request.args.get('mileage_min', '')
+    mileage_max     = request.args.get('mileage_max', '')
+    region          = request.args.get('region', '')
+    q               = request.args.get('q', '')
+    favs            = request.args.get('favs', '')
+    car_type_filter = request.args.get('car_type_filter', '')
+    sort            = request.args.get('sort', 'recommend')
+    page            = int(request.args.get('page', 1))
+    per_page        = 60
+    offset          = (page - 1) * per_page
 
     sort_map = {
+        'recommend':   'year DESC, mileage ASC, price ASC',
         'price_asc':   'price ASC',
         'price_desc':  'price DESC',
         'year_desc':   'year DESC, price ASC',
         'mileage_asc': 'mileage ASC',
     }
-    order_by = sort_map.get(sort, 'price ASC')
+    order_by = sort_map.get(sort, 'year DESC, mileage ASC, price ASC')
 
     # 찜한 차 모드: 특정 ID 목록만 조회 (다른 필터 무시)
     if favs:
@@ -129,6 +172,8 @@ def car_list():
             conditions.append('mileage <= %s');      params.append(mileage_max)
         if region:
             conditions.append('region = %s');        params.append(region)
+        if car_type_filter:
+            conditions.append('car_type = %s');      params.append(car_type_filter)
         if q:
             # 브랜드명, 모델명, 배지(세부모델) 모두 포함 검색
             conditions.append('(manufacturer LIKE %s OR model LIKE %s OR badge LIKE %s)')
@@ -167,7 +212,8 @@ def car_list():
                            fuel_type=fuel_type, year_min=year_min, year_max=year_max,
                            price_min=price_min, price_max=price_max,
                            mileage_min=mileage_min, mileage_max=mileage_max,
-                           q=q, favs=favs, sort=sort, region=region)
+                           q=q, favs=favs, sort=sort, region=region,
+                           car_type_filter=car_type_filter)
 
 
 

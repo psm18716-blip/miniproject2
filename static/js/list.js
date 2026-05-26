@@ -45,15 +45,23 @@ function clearFilter(...names) {
 
 /* ── 뷰 전환 ── */
 function setView(mode) {
+    /* sessionStorage는 항상 문자열 → 숫자 모드는 정규화 */
+    const m = (mode === '2' || mode === 2) ? 2
+            : (mode === '3' || mode === 3) ? 3
+            : 'l';
     const grid = document.getElementById('carGrid');
     if (!grid) return;
     grid.className = 'car-grid';
-    if (mode === 3) grid.classList.add('g3');
-    if (mode === 'l') grid.classList.add('list-view');
-    ['v2', 'v3', 'vl'].forEach(id => document.getElementById(id).classList.remove('on'));
-    const map = { 2: 'v2', 3: 'v3', l: 'vl' };
-    document.getElementById(map[mode]).classList.add('on');
-    sessionStorage.setItem('listView', mode);
+    if (m === 3) grid.classList.add('g3');
+    if (m === 'l') grid.classList.add('list-view');
+    ['v2', 'v3', 'vl'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('on');
+    });
+    const btnMap = { 2: 'v2', 3: 'v3', l: 'vl' };
+    const btn = document.getElementById(btnMap[m]);
+    if (btn) btn.classList.add('on');
+    sessionStorage.setItem('listView', String(m));
 }
 
 /* ── 사이드바 브랜드 검색 ── */
@@ -121,9 +129,9 @@ function toggleFavFilter() {
 
 /* ── 페이지 로드 ── */
 document.addEventListener('DOMContentLoaded', () => {
+    const saved = sessionStorage.getItem('listView') || 'l';
+    setView(saved);
     updateFavUI();
-    const saved = sessionStorage.getItem('listView');
-    if (saved) setView(isNaN(saved) ? saved : Number(saved));
     const active = document.querySelector('.sb-brand.active');
     if (active) active.scrollIntoView({ block: 'center', behavior: 'instant' });
 });
