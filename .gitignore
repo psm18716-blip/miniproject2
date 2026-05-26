@@ -1,5 +1,3 @@
-model.pkl
-encoders.pkl
 dedupe.py
 .env
 __pycache__/
