@@ -506,6 +506,8 @@ def predict():
 @app.route('/api/ai-insight')
 def api_ai_insight():
     from flask import jsonify
+    import numpy as np
+    import pandas as pd
     import google.generativeai as genai
 
     api_key = os.getenv('GEMINI_API_KEY', '')
