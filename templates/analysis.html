@@ -148,26 +148,39 @@
             <div class="side-card side-stats">
                 <div class="side-stat">
                     <div class="side-stat-label">📦 총 매물 수</div>
-                    <div class="side-stat-value">{{ "{:,}".format(summary.total) }}</div>
-                    <div class="side-stat-unit">대</div>
+                    <div class="side-stat-row">
+                        <span class="side-stat-value">{{ "{:,}".format(summary.total) }}</span>
+                        <span class="side-stat-unit">대</span>
+                    </div>
                 </div>
                 <div class="side-stat-sep"></div>
                 <div class="side-stat">
                     <div class="side-stat-label">📈 전체 평균 시세</div>
-                    <div class="side-stat-value">{{ "{:,}".format(summary.avg_price | int) }}</div>
-                    <div class="side-stat-unit">만원</div>
+                    <div class="side-stat-row">
+                        <span class="side-stat-value">{{ "{:,}".format(summary.avg_price | int) }}</span>
+                        <span class="side-stat-unit">만원</span>
+                    </div>
                 </div>
                 <div class="side-stat-sep"></div>
                 <div class="side-stat stat-max">
                     <div class="side-stat-label">🔺 최고가</div>
-                    <div class="side-stat-value">{{ "{:,}".format(summary.max_price) }}</div>
-                    <div class="side-stat-unit">만원</div>
+                    <div class="side-stat-row">
+                        {% set max_p = summary.max_price %}
+                        {% if max_p >= 10000 %}
+                            <span class="side-stat-value">{{ max_p // 10000 }}억{% if max_p % 10000 > 0 %} {{ "{:,}".format(max_p % 10000) }}{% endif %}</span>
+                        {% else %}
+                            <span class="side-stat-value">{{ "{:,}".format(max_p) }}</span>
+                        {% endif %}
+                        <span class="side-stat-unit">만원</span>
+                    </div>
                 </div>
                 <div class="side-stat-sep"></div>
                 <div class="side-stat stat-min">
                     <div class="side-stat-label">🔻 최저가</div>
-                    <div class="side-stat-value">{{ "{:,}".format(summary.min_price) }}</div>
-                    <div class="side-stat-unit">만원</div>
+                    <div class="side-stat-row">
+                        <span class="side-stat-value">{{ "{:,}".format(summary.min_price) }}</span>
+                        <span class="side-stat-unit">만원</span>
+                    </div>
                 </div>
             </div>
         </aside>
