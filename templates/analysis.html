@@ -6,100 +6,9 @@
     <title>시세 분석 – CarMarket</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
     <style>
-        body { background:#f9fafb; }
-        @keyframes spin { to { transform:rotate(360deg); } }
-
-        /* 요약 카드 */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            margin-bottom: 2rem;
-        }
-        .s-card {
-            background: #fff;
-            border: 1.5px solid var(--gray-200);
-            border-radius: 14px;
-            padding: 1.25rem 1.4rem;
-        }
-        .s-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--gray-400);
-            letter-spacing: .06em;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-        .s-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--blue-600);
-            letter-spacing: -0.5px;
-            line-height: 1;
-        }
-        .s-sub {
-            font-size: 0.78rem;
-            color: var(--gray-400);
-            margin-top: 4px;
-        }
-
-        /* 차트 카드 */
-        .chart-card {
-            background: #fff;
-            border: 1.5px solid var(--gray-200);
-            border-radius: 16px;
-            padding: 1.5rem 1.75rem;
-            margin-bottom: 1.5rem;
-        }
-        .chart-title {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--gray-900);
-            letter-spacing: -0.2px;
-            margin-bottom: 1.25rem;
-        }
-        .chart-title span {
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: var(--gray-400);
-            margin-left: 8px;
-        }
-
-        /* 국산/수입 비교 바 */
-        .type-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 12px;
-        }
-        .type-label {
-            width: 50px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--gray-700);
-            flex-shrink: 0;
-        }
-        .type-bar-wrap {
-            flex: 1;
-            background: var(--gray-100);
-            border-radius: 999px;
-            height: 10px;
-            overflow: hidden;
-        }
-        .type-bar {
-            height: 100%;
-            border-radius: 999px;
-            background: var(--blue-600);
-        }
-        .type-val {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--blue-600);
-            flex-shrink: 0;
-            min-width: 70px;
-            text-align: right;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -116,60 +25,21 @@
     </div>
 </nav>
 
-<div class="container" style="max-width:1200px; padding:2rem 1.5rem 4rem;">
+<div class="analysis-wrap">
 
-    <!-- 페이지 헤더 -->
-    <div class="page-header" style="border-bottom:none; padding-bottom:0;">
-        <div>
-            <h2 class="page-title">📊 중고차 시세 분석</h2>
-            <p class="page-subtitle">엔카 크롤링 데이터 기반 · 가격 50만원 초과 매물 기준</p>
-        </div>
+    <!-- 페이지 타이틀 -->
+    <div class="analysis-title-row">
+        <h2 class="analysis-page-title">📊 중고차 시세 분석</h2>
     </div>
 
-    <!-- 요약 카드 4개 -->
-    <div class="summary-grid">
-        <div class="s-card">
-            <div class="s-label">총 매물 수</div>
-            <div class="s-value">{{ "{:,}".format(summary.total) }}</div>
-            <div class="s-sub">대</div>
-        </div>
-        <div class="s-card">
-            <div class="s-label">전체 평균 시세</div>
-            <div class="s-value">{{ "{:,}".format(summary.avg_price | int) }}</div>
-            <div class="s-sub">만원</div>
-        </div>
-        <div class="s-card">
-            <div class="s-label">최저가</div>
-            <div class="s-value">{{ "{:,}".format(summary.min_price) }}</div>
-            <div class="s-sub">만원</div>
-        </div>
-        <div class="s-card">
-            <div class="s-label">최고가</div>
-            <div class="s-value">{{ "{:,}".format(summary.max_price) }}</div>
-            <div class="s-sub">만원</div>
-        </div>
-    </div>
+    <!-- 메인 3단 레이아웃 -->
+    <div class="analysis-main">
 
-    <!-- Row 1: 브랜드 평균 시세 + 연료 분포 -->
-    <div class="row g-4 mb-0">
-
-        <!-- 브랜드별 평균 시세 -->
-        <div class="col-12 col-lg-7">
-            <div class="chart-card" style="height:100%;">
-                <div class="chart-title">🏆 브랜드별 평균 시세 <span>매물 수 기준 상위 10개</span></div>
-                <canvas id="brandChart" height="260"></canvas>
-            </div>
-        </div>
-
-        <!-- 연료 분포 + 국산/수입 -->
-        <div class="col-12 col-lg-5">
-            <div class="chart-card mb-3">
-                <div class="chart-title">⛽ 연료 타입 분포</div>
-                <canvas id="fuelChart" height="180"></canvas>
-            </div>
-
-            <div class="chart-card">
-                <div class="chart-title">🌐 국산 vs 수입 평균 시세</div>
+        <!-- 왼쪽: 국산 vs 수입 + 가격 영향 요인 (단일 카드) -->
+        <aside class="analysis-side">
+            <div class="side-card">
+                <div class="side-card-title">🌐 국산 vs 수입</div>
+                <div class="side-card-sub">평균 시세 비교</div>
                 {% set max_price = type_stats | map(attribute='avg_price') | max %}
                 {% for t in type_stats %}
                 <div class="type-row">
@@ -179,89 +49,135 @@
                     </div>
                     <span class="type-val" style="color: {{ '#2563eb' if t.car_type == '국산' else '#7c3aed' }};">{{ "{:,}".format(t.avg_price | int) }}만</span>
                 </div>
-                <div style="font-size:0.75rem; color:var(--gray-400); margin-bottom:8px;">{{ "{:,}".format(t.cnt) }}대</div>
+                <div class="type-cnt">{{ "{:,}".format(t.cnt) }}대</div>
                 {% endfor %}
+
+                <div class="side-section-divider"></div>
+
+                <div class="side-card-title">📐 가격 영향 요인</div>
+                <div class="side-card-sub">상관계수 · 회귀분석</div>
+                <div class="corr-item blue">
+                    <div class="corr-label">연식 ↔ 가격</div>
+                    <div class="corr-value" style="color:var(--blue-600);">{{ corr_year }}</div>
+                    <div class="corr-desc">연식 1년 상승 → 평균</div>
+                    <div class="corr-change" style="color:var(--blue-600);">+{{ "{:,}".format(price_per_year) }}만원</div>
+                    <div class="corr-hint">1에 가까울수록 최신 연식일수록 가격이 높음</div>
+                </div>
+                <div class="corr-item purple">
+                    <div class="corr-label">주행거리 ↔ 가격</div>
+                    <div class="corr-value" style="color:#7c3aed;">{{ corr_mileage }}</div>
+                    <div class="corr-desc">1만km 증가 → 평균</div>
+                    <div class="corr-change" style="color:#7c3aed;">{{ "{:,}".format(price_per_10k_km) }}만원</div>
+                    <div class="corr-hint">-1에 가까울수록 주행거리가 많을수록 가격이 낮음</div>
+                </div>
+                <div class="corr-tip">
+                    💡 상관계수는 -1~1 사이 값으로, <b>1</b>에 가까울수록 양의 상관, <b>-1</b>에 가까울수록 음의 상관을 의미합니다.
+                </div>
             </div>
-        </div>
-    </div>
+        </aside>
 
-    <!-- Row 2: 연식별 감가 패턴 -->
-    <div class="chart-card mt-4">
-        <div class="chart-title">📉 연식별 평균 시세 (감가 패턴) <span>2010년 이후 전 차종</span></div>
-        <canvas id="yearChart" height="110"></canvas>
-    </div>
+        <!-- 가운데: 캐러셀 + Q&A -->
+        <main class="analysis-center">
 
-    <!-- Row 3: 가격대별 분포 -->
-    <div class="chart-card">
-        <div class="chart-title">💰 가격대별 매물 분포</div>
-        <canvas id="priceDistChart" height="100"></canvas>
-    </div>
+            <!-- 차트 캐러셀 -->
+            <div class="carousel-card">
+                <div class="carousel-header">
+                    <span class="carousel-title" id="carouselTitle">🏆 브랜드별 평균 시세</span>
+                    <div class="carousel-nav">
+                        <button class="carousel-btn" onclick="slideMove(-1)">&#8249;</button>
+                        <div class="carousel-dots" id="carouselDots"></div>
+                        <button class="carousel-btn" onclick="slideMove(1)">&#8250;</button>
+                    </div>
+                </div>
 
-    <!-- Row 4: 상관관계 분석 -->
-    <div class="chart-card">
-        <div class="chart-title">📐 가격 영향 요인 분석 <span>상관계수 · 회귀분석</span></div>
-        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:1rem;">
-            <div style="background:var(--blue-50); border:1.5px solid var(--blue-100); border-radius:12px; padding:1.1rem 1.3rem;">
-                <div style="font-size:.72rem; font-weight:700; color:var(--blue-400); letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">연식 ↔ 가격 상관계수</div>
-                <div style="font-size:1.8rem; font-weight:900; color:var(--blue-600); letter-spacing:-1px;">{{ corr_year }}</div>
-                <div style="font-size:.8rem; color:var(--gray-500); margin-top:4px;">연식 1년 상승 → 평균 <b style="color:var(--blue-600);">+{{ "{:,}".format(price_per_year) }}만원</b></div>
-                <div style="font-size:.75rem; color:var(--gray-400); margin-top:6px; line-height:1.5;">1에 가까울수록 최신 연식일수록 가격이 높음</div>
+                <div class="carousel-slides">
+                    <div class="carousel-slide active" id="slide-0">
+                        <div class="slide-sub">매물 수 기준 상위 10개</div>
+                        <canvas id="brandChart" height="280"></canvas>
+                    </div>
+                    <div class="carousel-slide" id="slide-1">
+                        <div class="slide-sub">전체 매물 연료 유형 분포</div>
+                        <canvas id="fuelChart" height="200"></canvas>
+                    </div>
+                    <div class="carousel-slide" id="slide-2">
+                        <div class="slide-sub">감가 패턴 · 2010년 이후 전 차종</div>
+                        <canvas id="yearChart" height="160"></canvas>
+                    </div>
+                    <div class="carousel-slide" id="slide-3">
+                        <div class="slide-sub">가격 구간별 매물 현황</div>
+                        <canvas id="priceDistChart" height="160"></canvas>
+                    </div>
+                    <div class="carousel-slide" id="slide-4">
+                        <div class="slide-sub">매물 500건 이상 브랜드 · 2015년 이후</div>
+                        <div id="depBrandBtns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:1rem;"></div>
+                        <canvas id="depChart" height="160"></canvas>
+                    </div>
+                </div>
             </div>
-            <div style="background:#faf5ff; border:1.5px solid #e9d5ff; border-radius:12px; padding:1.1rem 1.3rem;">
-                <div style="font-size:.72rem; font-weight:700; color:#7c3aed; letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;">주행거리 ↔ 가격 상관계수</div>
-                <div style="font-size:1.8rem; font-weight:900; color:#7c3aed; letter-spacing:-1px;">{{ corr_mileage }}</div>
-                <div style="font-size:.8rem; color:var(--gray-500); margin-top:4px;">1만km 증가 → 평균 <b style="color:#7c3aed;">{{ "{:,}".format(price_per_10k_km) }}만원</b></div>
-                <div style="font-size:.75rem; color:var(--gray-400); margin-top:6px; line-height:1.5;">-1에 가까울수록 주행거리가 많을수록 가격이 낮음</div>
+
+            <!-- Q&A 챗봇 -->
+            <div class="qa-card">
+                <div class="qa-card-title">
+                    🤖 데이터 Q&A
+                    <span class="qa-card-sub">Gemini에게 직접 물어보세요</span>
+                </div>
+                <div class="qa-chips">
+                    {% set suggestions = [
+                        '왜 연식이 오래될수록 가격이 떨어지나요?',
+                        '수입차가 국산차보다 비싼 이유는?',
+                        '가솔린 차가 가장 많은 이유가 뭔가요?',
+                        '주행거리가 가격에 얼마나 영향을 주나요?',
+                        '어떤 연식대가 가성비가 좋을까요?'
+                    ] %}
+                    {% for s in suggestions %}
+                    <button class="qa-chip" onclick="setQuestion('{{ s }}')">{{ s }}</button>
+                    {% endfor %}
+                </div>
+                <div class="qa-input-wrap">
+                    <input id="qaInput" type="text" class="qa-input"
+                           placeholder="데이터에 대해 궁금한 점을 질문하세요..."
+                           onkeydown="if(event.key==='Enter') askGemini()">
+                    <button class="qa-btn" onclick="askGemini()">전송 ↑</button>
+                </div>
+                <div id="qaAnswer" class="qa-answer"></div>
             </div>
-        </div>
-        <div style="background:var(--gray-50); border-radius:10px; padding:.9rem 1.1rem; font-size:.82rem; color:var(--gray-500); line-height:1.7;">
-            💡 상관계수는 -1~1 사이 값으로, <b>1</b>에 가까울수록 양의 상관(함께 증가), <b>-1</b>에 가까울수록 음의 상관(반대로 움직임), <b>0</b>에 가까울수록 관계없음을 의미합니다.
-        </div>
-    </div>
+        </main>
 
-    <!-- Row 5: AI 인사이트 채팅 -->
-    <div class="chart-card">
-        <div class="chart-title">🤖 데이터 Q&A <span>Gemini에게 직접 물어보세요</span></div>
+        <!-- 오른쪽: 요약 스탯 -->
+        <aside class="analysis-side">
+            <div class="side-card side-stats">
+                <div class="side-stat">
+                    <div class="side-stat-label">📦 총 매물 수</div>
+                    <div class="side-stat-value">{{ "{:,}".format(summary.total) }}</div>
+                    <div class="side-stat-unit">대</div>
+                </div>
+                <div class="side-stat-sep"></div>
+                <div class="side-stat">
+                    <div class="side-stat-label">📈 전체 평균 시세</div>
+                    <div class="side-stat-value">{{ "{:,}".format(summary.avg_price | int) }}</div>
+                    <div class="side-stat-unit">만원</div>
+                </div>
+                <div class="side-stat-sep"></div>
+                <div class="side-stat stat-max">
+                    <div class="side-stat-label">🔺 최고가</div>
+                    <div class="side-stat-value">{{ "{:,}".format(summary.max_price) }}</div>
+                    <div class="side-stat-unit">만원</div>
+                </div>
+                <div class="side-stat-sep"></div>
+                <div class="side-stat stat-min">
+                    <div class="side-stat-label">🔻 최저가</div>
+                    <div class="side-stat-value">{{ "{:,}".format(summary.min_price) }}</div>
+                    <div class="side-stat-unit">만원</div>
+                </div>
+            </div>
+        </aside>
 
-        <!-- 추천 질문 칩 -->
-        <div class="qa-chips">
-            {% set suggestions = [
-                '왜 연식이 오래될수록 가격이 떨어지나요?',
-                '수입차가 국산차보다 비싼 이유는?',
-                '가솔린 차가 가장 많은 이유가 뭔가요?',
-                '주행거리가 가격에 얼마나 영향을 주나요?',
-                '어떤 연식대가 가성비가 좋을까요?'
-            ] %}
-            {% for s in suggestions %}
-            <button class="qa-chip" onclick="setQuestion('{{ s }}')">{{ s }}</button>
-            {% endfor %}
-        </div>
+    </div><!-- /.analysis-main -->
 
-        <!-- 입력창 -->
-        <div class="qa-input-wrap">
-            <input id="qaInput" type="text" class="qa-input"
-                   placeholder="데이터에 대해 궁금한 점을 질문하세요..."
-                   onkeydown="if(event.key==='Enter') askGemini()">
-            <button class="qa-btn" onclick="askGemini()">전송 ↑</button>
-        </div>
-
-        <!-- 답변 영역 -->
-        <div id="qaAnswer" class="qa-answer"></div>
-    </div>
-
-    <!-- Row 6: 브랜드별 연식 감가율 -->
-    <div class="chart-card">
-        <div class="chart-title">📉 브랜드별 연식 감가율 <span>매물 500건 이상 브랜드 · 2015년 이후</span></div>
-        <!-- 브랜드 토글 버튼 -->
-        <div id="depBrandBtns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:1rem;"></div>
-        <canvas id="depChart" height="110"></canvas>
-    </div>
-
-</div>
+</div><!-- /.analysis-wrap -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-/* ── 데이터 주입 (Flask → JS) ── */
 const BRAND_LABELS = {{ brand_stats | map(attribute='manufacturer') | list | tojson }};
 const BRAND_PRICES = {{ brand_stats | map(attribute='avg_price')    | list | tojson }};
 const BRAND_COUNTS = {{ brand_stats | map(attribute='cnt')          | list | tojson }};
@@ -278,35 +194,38 @@ const PD_COUNTS    = {{ price_dist  | map(attribute='cnt')          | list | toj
 const DEP_DATA     = {{ dep_brands | tojson }};
 </script>
 
-<!-- 4개 표준 차트: analysis.js가 처리 -->
 <script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
 
 <script>
-/* ── 브랜드별 감가율 차트 (DEP_DATA 의존, 인라인 유지) ── */
+/* ── 브랜드별 감가율 차트 ── */
 const DEP_BRANDS      = Object.keys(DEP_DATA);
 const COLORS_DEP      = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626',
                           '#0891b2','#65a30d','#9333ea','#e11d48','#0f766e'];
-const depActiveBrands = new Set(DEP_BRANDS.slice(0, 5));
+const depActiveBrands = new Set(DEP_BRANDS.slice(0, 3));
 let depChart = null;
+let depHovered = null;
 
 function buildDepChart() {
-    const datasets = DEP_BRANDS
-        .filter(b => depActiveBrands.has(b))
-        .map(b => ({
+    const activeBrands = DEP_BRANDS.filter(b => depActiveBrands.has(b));
+    const datasets = activeBrands.map(b => {
+        const idx = DEP_BRANDS.indexOf(b);
+        const color = COLORS_DEP[idx % COLORS_DEP.length];
+        return {
             label: b,
             data: DEP_DATA[b].years.map((y, j) => ({ x: y, y: DEP_DATA[b].prices[j] })),
-            borderColor: COLORS_DEP[DEP_BRANDS.indexOf(b) % COLORS_DEP.length],
+            borderColor: color,
             backgroundColor: 'transparent',
-            tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
-        }));
+            tension: 0.3, pointRadius: 4, pointHoverRadius: 7, borderWidth: 2,
+        };
+    });
     if (depChart) depChart.destroy();
     depChart = new Chart(document.getElementById('depChart'), {
         type: 'line',
         data: { datasets },
         options: {
-            responsive: true, parsing: false,
+            responsive: true, maintainAspectRatio: false, parsing: false,
             plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 12 } } },
+                legend: { display: false },
                 tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}만원` } }
             },
             scales: {
@@ -315,6 +234,19 @@ function buildDepChart() {
             }
         }
     });
+}
+
+function highlightDepBrand(focusBrand) {
+    if (!depChart) return;
+    depChart.data.datasets.forEach(ds => {
+        const isFocused = (focusBrand === null) || ds.label === focusBrand;
+        const idx = DEP_BRANDS.indexOf(ds.label);
+        const color = COLORS_DEP[idx % COLORS_DEP.length];
+        ds.borderColor = isFocused ? color : color + '33';
+        ds.borderWidth = isFocused ? 3 : 1;
+        ds.pointRadius = isFocused ? 5 : 2;
+    });
+    depChart.update('none');
 }
 
 function renderDepBtns() {
@@ -332,11 +264,111 @@ function renderDepBtns() {
             else { depActiveBrands.add(b); }
             renderDepBtns(); buildDepChart();
         });
+        btn.addEventListener('mouseenter', () => highlightDepBrand(b));
+        btn.addEventListener('mouseleave', () => highlightDepBrand(null));
         wrap.appendChild(btn);
     });
 }
-renderDepBtns();
-buildDepChart();
+
+/* ── 캐러셀 ── */
+const SLIDE_TITLES = [
+    '🏆 브랜드별 평균 시세',
+    '⛽ 연료 타입 분포',
+    '📉 연식별 평균 시세',
+    '💰 가격대별 매물 분포',
+    '📉 브랜드별 연식 감가율',
+];
+
+const chartInitFns = [
+    buildBrandChart,
+    buildFuelChart,
+    buildYearChart,
+    buildPriceDistChart,
+    () => { renderDepBtns(); buildDepChart(); },
+];
+const chartInited = [false, false, false, false, false];
+
+let currentSlide = 0;
+const totalSlides = 5;
+let animating = false;
+
+function initDots() {
+    const dots = document.getElementById('carouselDots');
+    dots.innerHTML = '';
+    for (let i = 0; i < totalSlides; i++) {
+        const d = document.createElement('button');
+        d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        d.onclick = () => goToSlide(i);
+        dots.appendChild(d);
+    }
+}
+
+function getDir(from, to) {
+    if (from === to) return 0;
+    if (to === (from + 1) % totalSlides) return 1;
+    if (from === (to + 1) % totalSlides) return -1;
+    return to > from ? 1 : -1;
+}
+
+function goToSlide(idx) {
+    const target = (idx + totalSlides) % totalSlides;
+    if (target === currentSlide || animating) return;
+    animating = true;
+
+    const dir = getDir(currentSlide, target);
+    const oldSlide = document.getElementById('slide-' + currentSlide);
+    const newSlide = document.getElementById('slide-' + target);
+
+    // 기존 슬라이드 퇴장
+    oldSlide.style.transform = `translateX(${dir * -60}px)`;
+    oldSlide.style.opacity = '0';
+    oldSlide.style.pointerEvents = 'none';
+
+    // 새 슬라이드 진입 준비 (트랜지션 없이 시작 위치 설정)
+    newSlide.style.transition = 'none';
+    newSlide.style.transform = `translateX(${dir * 60}px)`;
+    newSlide.style.opacity = '0';
+    newSlide.offsetHeight; // force reflow
+
+    // 차트 초기화 (canvas가 DOM에 있으므로 가능)
+    if (!chartInited[target]) {
+        chartInitFns[target]();
+        chartInited[target] = true;
+    }
+
+    // 트랜지션 복원 후 진입 애니메이션
+    newSlide.style.transition = '';
+    newSlide.style.transform = 'translateX(0)';
+    newSlide.style.opacity = '1';
+    newSlide.style.pointerEvents = 'auto';
+
+    // 도트 & 타이틀 업데이트
+    document.querySelectorAll('.carousel-dot')[currentSlide].classList.remove('active');
+    document.querySelectorAll('.carousel-dot')[target].classList.add('active');
+    document.getElementById('carouselTitle').textContent = SLIDE_TITLES[target];
+
+    const prev = currentSlide;
+    currentSlide = target;
+
+    setTimeout(() => {
+        oldSlide.classList.remove('active');
+        oldSlide.style.transform = '';
+        oldSlide.style.opacity = '';
+        oldSlide.style.pointerEvents = '';
+        newSlide.classList.add('active');
+        // 전환 후 차트 크기 재계산
+        Chart.instances && Object.values(Chart.instances).forEach(c => {
+            if (newSlide.contains(c.canvas)) c.resize();
+        });
+        animating = false;
+    }, 380);
+}
+
+function slideMove(dir) { goToSlide(currentSlide + dir); }
+
+initDots();
+buildBrandChart();
+chartInited[0] = true;
 
 /* ── Gemini Q&A ── */
 function setQuestion(q) {
