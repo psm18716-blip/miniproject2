@@ -11,14 +11,21 @@ load_dotenv()
 app = Flask(__name__)
 
 
-ml_model    = joblib.load('model.pkl')
-ml_encoders = joblib.load('encoders.pkl')
+ml_model    = None
+ml_encoders = None
+
+def _load_model():
+    global ml_model, ml_encoders
+    if ml_model is None:
+        ml_model    = joblib.load('model.pkl')
+        ml_encoders = joblib.load('encoders.pkl')
 
 def _safe_enc(le, val):
     s = str(val) if val is not None else 'None'
     return le.transform([s if s in set(le.classes_) else le.classes_[0]])[0]
 
 def predict_price(car):
+    _load_model()
     feature_cols = list(ml_model.feature_names_in_)
     defaults = {'fuel_type': '기타'}
     row = {}
