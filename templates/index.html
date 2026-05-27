@@ -585,34 +585,76 @@
         </div>
         <div class="sb-brands">
           <span class="sb-title">브랜드 · 모델</span>
-          {% set brand_domains = { '현대': 'hyundai.com', '기아': 'kia.com',
-          '제네시스': 'genesis.com', 'BMW': 'bmw.com', '벤츠':
-          'mercedes-benz.com', '아우디': 'audi.com', '폭스바겐': 'vw.com',
-          '쉐보레(GM대우)': 'chevrolet.com', 'KG모빌리티(쌍용)':
-          'kg-mobility.com', '미니': 'mini.com', '랜드로버': 'landrover.com',
-          '포르쉐': 'porsche.com', '렉서스': 'lexus.com', '테슬라': 'tesla.com',
-          '볼보': 'volvocars.com', '혼다': 'honda.com', '도요타': 'toyota.com',
-          '르노코리아(삼성)': 'renault.com', '링컨': 'lincolnvehicles.com',
-          '캐딜락': 'cadillac.com', '마세라티': 'maserati.com', '페라리':
-          'ferrari.com', '람보르기니': 'lamborghini.com', '롤스로이스':
-          'rolls-roycemotorcars.com', '벤틀리': 'bentleymotors.com', '재규어':
-          'jaguar.com', '닛산': 'nissan.com', '인피니티': 'infinitiusa.com',
-          '푸조': 'peugeot.com', '포드': 'ford.com', '지프': 'jeep.com',
-          '시트로엔/DS': 'citroen.com', '피아트': 'fiat.com', '맥라렌':
-          'mclaren.com', 'BYD': 'byd.com' } %} {% for brand in brands %} {% set
-          domain = brand_domains.get(brand.manufacturer, '') %}
+          {% set brand_imgs = {
+              '기아':             'kia.png',
+              '현대':             'hyundai.png',
+              '벤츠':             'benz.png',
+              'BMW':              'bmw.png',
+              '제네시스':         'genesis.png',
+              'KG모빌리티(쌍용)': 'kg.png',
+              '쉐보레(GM대우)':   'chevrolet.png',
+              '쉐보레':           'chevrolet.png',
+              '아우디':           'audi.png',
+              '르노코리아(삼성)': 'renault.png',
+              '미니':             'mini.png',
+              '포르쉐':           'porsche.png',
+              '랜드로버':         'landrover.png',
+              '폭스바겐':         'vw.png',
+              '볼보':             'volvo.png',
+              '렉서스':           'lexus.png',
+              '테슬라':           'tesla.png',
+              '혼다':             'honda.png',
+              '도요타':           'toyota.png',
+              '링컨':             'lincoln.png',
+              '캐딜락':           'cadillac.png',
+              '마세라티':         'maserati.png',
+              '페라리':           'ferrari.png',
+              '람보르기니':       'lamborghini.png',
+              '재규어':           'jaguar.png',
+              '닛산':             'nissan.png',
+              '포드':             'ford.png',
+              '지프':             'jeep.png',
+              '푸조':             'pg.png',
+              '인피니티':         'infiniti.png',
+              '벤틀리':           'bentley.png',
+              '시트로엥':         'citroen.png',
+              '시트로엥/DS':      'citroen.png',
+              'DS':               'ds.png',
+              '롤스로이스':       'rollsroyce.png',
+              '닷지':             'dodge.png',
+              '폴스타':           'polestar.png',
+              '피아트':           'fiat.png',
+              '크라이슬러':       'chrysler.png',
+              '애스턴마틴':       'astonmartin.png',
+              'BYD':              'byd.png',
+              '스즈키':           'suzuki.png',
+              '스마트':           'smart.png',
+              'GMC':              'gmc.png',
+              '험머':             'hummer.png',
+              '맥라렌':           'mclaren.png',
+              '사브':             'saab.png',
+              '로터스':           'lotus.png',
+              '스바루':           'subaru.png',
+              '마이바흐':         'maybach.png',
+              '다이하쯔':         'daihatsu.png',
+              '북기은상':          'bukgi.png',
+              '미쯔오까':           'mizzi.png',
+              '동풍소콘':       'dongfeng.png',
+              '기타 제조사':      'guitar.png',
+              '기타 수입차':      'guitar.png'
+          } %}
+          {% for brand in brands %}
+          {% set img = brand_imgs.get(brand.manufacturer, '') %}
           <a href="/list?manufacturer={{ brand.manufacturer }}" class="bi-row">
-            <div class="bi-logo">
-              {% if domain %}
+            <div class="bi-logo {% if not img %}fallback{% endif %}">
+              {% if img %}
               <img
-                src="https://www.google.com/s2/favicons?domain={{ domain }}&sz=128"
+                src="{{ url_for('static', filename='img/brands/' ~ img) }}"
                 alt="{{ brand.manufacturer }}"
-                onerror="this.parentElement.classList.add('fallback');this.parentElement.innerHTML='{{ brand.manufacturer[:2] }}'"
+                onerror="this.parentElement.classList.add('fallback');this.parentElement.innerHTML='<span style=\'font-size:.65rem;font-weight:800;color:#fff;\'>{{ brand.manufacturer[:2] }}</span>'"
               />
               {% else %}
-              <span style="font-size: 0.65rem; font-weight: 800; color: #fff"
-                >{{ brand.manufacturer[:2] }}</span
-              >
+              <span style="font-size:.65rem;font-weight:800;color:#fff;">{{ brand.manufacturer[:2] }}</span>
               {% endif %}
             </div>
             <span class="bi-name">{{ brand.manufacturer }}</span>

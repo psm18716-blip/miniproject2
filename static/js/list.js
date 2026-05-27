@@ -45,7 +45,6 @@ function clearFilter(...names) {
 
 /* ── 뷰 전환 ── */
 function setView(mode) {
-    /* sessionStorage는 항상 문자열 → 숫자 모드는 정규화 */
     const m = (mode === '2' || mode === 2) ? 2
             : (mode === '3' || mode === 3) ? 3
             : 'l';
@@ -88,7 +87,7 @@ function toggleLike(e, id) {
     const btn = e.currentTarget;
     const sid = String(id);
     if (favs.has(sid)) {
-        favs.delete(sid); btn.textContent = '♡'; btn.classList.remove('liked'); btn.style.color = '';
+        favs.delete(sid); btn.textContent = '♥'; btn.classList.remove('liked'); btn.style.color = '#fff';
     } else {
         favs.add(sid); btn.textContent = '♥'; btn.classList.add('liked'); btn.style.color = '#ef4444';
         btn.style.transform = 'scale(1.4)'; setTimeout(() => btn.style.transform = '', 200);
@@ -98,13 +97,19 @@ function toggleLike(e, id) {
 }
 function updateFavUI() {
     const favs = getFavs();
-    document.getElementById('favCount').textContent = favs.size;
+    const favCnt = document.getElementById('favCount');
+    if (favCnt) favCnt.textContent = favs.size;
+    const floatCnt = document.getElementById('favCountFloat');
+    if (floatCnt) floatCnt.textContent = favs.size;
+    const floatBtn = document.getElementById('favFloat');
+    if (floatBtn) floatBtn.classList.toggle('on', favs.size > 0);
     document.querySelectorAll('.hd-card').forEach(card => {
         const btn = card.querySelector('.like-btn');
+        if (!btn) return;
         if (favs.has(String(card.dataset.id))) {
             btn.textContent = '♥'; btn.classList.add('liked'); btn.style.color = '#ef4444';
         } else {
-            btn.textContent = '♡'; btn.classList.remove('liked'); btn.style.color = '';
+            btn.textContent = '♥'; btn.classList.remove('liked'); btn.style.color = '#fff';
         }
     });
 }
@@ -134,4 +139,17 @@ document.addEventListener('DOMContentLoaded', () => {
     updateFavUI();
     const active = document.querySelector('.sb-brand.active');
     if (active) active.scrollIntoView({ block: 'center', behavior: 'instant' });
+
+    /* 비교 상태 복원 */
+    if (typeof loadCompare === 'function') {
+        loadCompare();
+        document.querySelectorAll('.hd-card').forEach(card => {
+            if (compareSet.has(Number(card.dataset.id))) {
+                card.classList.add('selected');
+                const btn = card.querySelector('.compare-chk');
+                if (btn) btn.classList.add('checked');
+            }
+        });
+        updateCompareBar();
+    }
 });

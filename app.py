@@ -128,6 +128,7 @@ def index():
 @app.route('/list')
 def car_list():
     manufacturer    = request.args.get('manufacturer', '')
+    model_filter    = request.args.get('model', '')
     fuel_type       = request.args.get('fuel_type', '')
     year_min        = request.args.get('year_min', '')
     year_max        = request.args.get('year_max', '')
@@ -187,6 +188,8 @@ def car_list():
             conditions.append('region = %s');        params.append(region)
         if car_type_filter:
             conditions.append('car_type = %s');      params.append(car_type_filter)
+        if model_filter:
+            conditions.append('model = %s');          params.append(model_filter)
         if q:
             # 브랜드명, 모델명, 배지(세부모델) 모두 포함 검색
             conditions.append('(manufacturer LIKE %s OR model LIKE %s OR badge LIKE %s)')
@@ -204,6 +207,15 @@ def car_list():
             ORDER BY count DESC
         """)
         brands = cur.fetchall()
+
+        models = []
+        if manufacturer:
+            cur.execute("""
+                SELECT model, COUNT(*) as count
+                FROM cars WHERE manufacturer = %s
+                GROUP BY model ORDER BY count DESC
+            """, (manufacturer,))
+            models = cur.fetchall()
 
         cur.execute(f'SELECT COUNT(*) as total FROM cars {where}', params)
         total = cur.fetchone()['total']
@@ -226,7 +238,8 @@ def car_list():
                            price_min=price_min, price_max=price_max,
                            mileage_min=mileage_min, mileage_max=mileage_max,
                            q=q, favs=favs, sort=sort, region=region,
-                           car_type_filter=car_type_filter)
+                           car_type_filter=car_type_filter,
+                           models=models, model_filter=model_filter)
 
 
 

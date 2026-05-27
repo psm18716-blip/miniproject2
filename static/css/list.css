@@ -13,6 +13,15 @@
         }
         .left-sb::-webkit-scrollbar { display:none; }
 
+        /* 전체 브랜드 돌아가기 */
+        .sb-back {
+            display:flex; align-items:center; gap:6px;
+            font-size:.78rem; font-weight:700; color:var(--gray-400);
+            text-decoration:none; padding:12px 14px 6px;
+            transition:color .15s;
+        }
+        .sb-back:hover { color:var(--blue-600); }
+
         /* 검색창 */
         .sb-search-wrap {
             padding:14px 12px 10px;
@@ -37,7 +46,7 @@
         /* 브랜드 섹션 */
         .sb-brands { padding:8px 10px 16px; flex:1; }
         .sb-section-title {
-            font-size:0.72rem; font-weight:700; color:var(--gray-400);
+            font-size:0.8rem; font-weight:750; color:var(--black-400);
             letter-spacing:.06em; text-transform:uppercase;
             padding:6px 4px 8px; display:block;
         }
@@ -49,12 +58,11 @@
         .sb-brand:hover { background:var(--gray-50); }
         .sb-brand.active { background:var(--blue-50); }
         .sb-logo {
-            width:26px; height:26px; border-radius:7px;
-            background:var(--gray-100); overflow:hidden; flex-shrink:0;
+            width:34px; height:34px; flex-shrink:0;
             display:flex; align-items:center; justify-content:center;
         }
-        .sb-logo img { width:20px; height:20px; object-fit:contain; }
-        .sb-logo.fb { background:var(--blue-600); color:#fff; font-size:.65rem; font-weight:800; }
+        .sb-logo img { width:34px; height:34px; object-fit:contain; mix-blend-mode:multiply; }
+        .sb-logo.fb { background:var(--blue-600); color:#fff; font-size:.75rem; font-weight:800; border-radius:8px; width:34px; height:34px; }
         .sb-brand-name { font-size:.86rem; font-weight:600; color:var(--gray-700); flex:1; }
         .sb-brand.active .sb-brand-name { color:var(--blue-600); font-weight:700; }
         .sb-brand-cnt { font-size:.75rem; font-weight:700; color:var(--blue-500); }
@@ -180,10 +188,11 @@
             display:flex; align-items:center;
             justify-content:space-between;
             padding:12px 1.5rem 10px;
+            position:relative;
         }
         .result-left { display:flex; align-items:center; gap:10px; }
         .result-cnt {
-            font-size:1rem; font-weight:800; color:var(--gray-900);
+            font-size:1.5rem; font-weight:700; color:var(--gray-900);
             letter-spacing:-.3px;
         }
         .fav-toggle {
@@ -195,9 +204,19 @@
         }
         .fav-toggle:hover { border-color:#ef4444; color:#ef4444; }
         .fav-toggle.on { border-color:#ef4444; background:#fef2f2; color:#ef4444; }
-        .fav-count {
-            background:#ef4444; color:#fff; font-size:.68rem; font-weight:800;
-            padding:1px 6px; border-radius:999px; min-width:16px; text-align:center;
+
+        .result-brand-label {
+            position:absolute; left:50%; transform:translateX(-50%);
+            display:flex; align-items:center; gap:6px;
+            pointer-events:none;
+        }
+        .result-brand-name {
+            font-size:1.3rem; font-weight:800; color:var(--gray-900);
+            letter-spacing:-.3px;
+        }
+        .result-brand-sep { font-size:1.1rem; color:var(--gray-400); }
+        .result-model-name {
+            font-size:1.3rem; font-weight:700; color:var(--blue-600);
         }
 
         .result-right { display:flex; align-items:center; gap:10px; }
@@ -236,6 +255,7 @@
             border-radius:14px;
             border:1.5px solid var(--gray-200);
             overflow:hidden;
+            position:relative;
         }
         .hd-card:hover {
             transform:translateY(-3px);
@@ -266,16 +286,17 @@
         .hd-card:hover .hd-img img { transform:scale(1.04); }
 
         .like-btn {
-            position:absolute; top:10px; right:10px;
-            width:34px; height:34px; border-radius:50%;
-            background:rgba(255,255,255,.9); border:none;
-            font-size:1rem; cursor:pointer; display:flex;
+            position:absolute; top:0px; right:40px;
+            width:48px; height:48px; border-radius:50%;
+            background:none; border:none;
+            font-size:1.8rem; cursor:pointer; display:flex;
             align-items:center; justify-content:center;
-            transition:transform .15s; backdrop-filter:blur(4px);
-            z-index:2;
+            color:#fff; text-shadow:0 0 2px rgba(0,0,0,.8), 0 1px 6px rgba(0,0,0,.6);
+            transition:color .15s, transform .15s;
+            z-index:10; flex-shrink:0;
         }
-        .like-btn:hover { transform:scale(1.15); }
-        .like-btn.liked { color:#ef4444; }
+        .like-btn:hover { color:#ef4444; transform:scale(1.2); text-shadow:none; }
+        .like-btn.liked { color:#ef4444; text-shadow:none; }
 
         .inner-thumb {
             position:absolute; bottom:8px; right:8px;
@@ -305,9 +326,10 @@
 
         /* ── 리스트 뷰 ──────────────────────────── */
         .car-grid.list-view {
-            display:flex; flex-direction:column; gap:10px;
+            display:flex; flex-direction:column; gap:6px;
             grid-template-columns:none; background:transparent;
-            padding:14px 1.5rem 0;
+            padding:10px 1.5rem 0;
+            max-width:1400px;
         }
         .car-grid.list-view .hd-card {
             display:flex; align-items:center;
@@ -323,7 +345,6 @@
             border-radius:0; background:#f5f5f5;
         }
         .car-grid.list-view .hd-img img { padding:4px; }
-        .car-grid.list-view .hd-img .like-btn { top:6px; right:6px; width:28px; height:28px; font-size:.85rem; }
         .car-grid.list-view .inner-thumb { display:none; }
         .car-grid.list-view .hd-body {
             flex:1; padding:14px 18px; display:flex;
@@ -334,17 +355,48 @@
 
         /* ── 비교 체크박스 ─────────────────────── */
         .compare-chk {
-            position:absolute; top:10px; left:10px;
+            position:absolute; top:10px; right:10px;
             width:28px; height:28px; border-radius:7px;
-            background:rgba(255,255,255,.92); border:2px solid var(--gray-300);
+            background:rgba(255,255,255,.95); border:2px solid #c0c0c0;
             display:flex; align-items:center; justify-content:center;
             cursor:pointer; font-size:.85rem; transition:all .15s;
-            backdrop-filter:blur(4px); z-index:2; color:transparent;
+            box-shadow:0 1px 5px rgba(0,0,0,.18);
+            z-index:10; color:transparent;
         }
         .compare-chk.checked {
             background:var(--blue-600); border-color:var(--blue-600); color:#fff;
         }
         .hd-card.selected { border-color:var(--blue-500); box-shadow:0 0 0 2px var(--blue-200); }
+
+        /* ── 찜하기 플로팅 버튼 ─────────────────── */
+        .fav-float {
+            position:fixed; right:0; top:50%;
+            transform:translateY(-50%);
+            background:#fff1f2; border:1.5px solid #fca5a5;
+            border-right:none; border-radius:12px 0 0 12px;
+            padding:14px 10px; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center; gap:5px;
+            box-shadow:-3px 0 14px rgba(239,68,68,.15);
+            transition:all .15s; z-index:500;
+            user-select:none;
+        }
+        .fav-float:hover { background:#ffe4e6; border-color:#f87171; box-shadow:-3px 0 18px rgba(239,68,68,.25); }
+        .fav-float:hover .fav-float-icon { transform:scale(1.15); }
+        .fav-float-icon {
+            font-size:1.4rem; color:#ef4444;
+            transition:color .15s, transform .15s;
+        }
+        .fav-float-label {
+            font-size:.68rem; font-weight:700; color:#dc2626;
+            white-space:nowrap;
+        }
+        .fav-float-cnt {
+            font-size:.78rem; font-weight:800; color:#fff;
+            background:#ef4444; border-radius:999px;
+            padding:1px 7px; min-width:20px; text-align:center;
+        }
+        .fav-float.on { background:#ffe4e6; border-color:#f87171; }
+        .fav-float.on .fav-float-icon { color:#dc2626; }
 
         /* ── 비교 플로팅 바 ────────────────────── */
         .compare-bar {
@@ -356,8 +408,37 @@
             box-shadow:0 -4px 24px rgba(0,0,0,.25);
         }
         .compare-bar.show { transform:translateY(0); }
-        .compare-bar-info { font-size:.9rem; font-weight:600; }
+        .compare-bar-info { font-size:.9rem; font-weight:600; min-width:100px; }
         .compare-bar-info b { color:#60a5fa; }
+        .compare-bar-center {
+            position:absolute; left:50%; transform:translateX(-50%);
+            display:flex; align-items:center; gap:12px;
+        }
+        .cmp-item { display:flex; align-items:center; gap:6px; }
+        .cmp-info { display:flex; flex-direction:column; gap:1px; }
+        .cmp-chk {
+            width:20px; height:20px; border-radius:5px;
+            background:#2563eb; color:#fff;
+            font-size:.72rem; font-weight:900;
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0; cursor:pointer;
+            transition:background .15s, transform .15s;
+        }
+        .cmp-chk:hover { background:#ef4444; transform:scale(1.1); }
+        .cmp-name {
+            font-size:.9rem; font-weight:800; color:#fff;
+            letter-spacing:-.3px; line-height:1.2;
+        }
+        .cmp-detail {
+            font-size:.72rem; font-weight:500; color:#94a3b8;
+            line-height:1.2;
+        }
+        .cmp-vs {
+            font-size:.85rem; font-weight:700; color:#60a5fa;
+            background:rgba(96,165,250,.15); padding:3px 10px;
+            border-radius:999px;
+        }
+        .cmp-placeholder { color:#94a3b8; background:none; }
         .compare-bar-btns { display:flex; gap:10px; }
         .compare-go {
             background:#2563eb; color:#fff; border:none;
@@ -373,4 +454,3 @@
             transition:all .15s;
         }
         .compare-clear:hover { color:#fff; border-color:#94a3b8; }
-    </style>
