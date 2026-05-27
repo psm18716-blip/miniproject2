@@ -1,8 +1,5 @@
 from flask import Flask, render_template, request
 import pymysql
-import joblib
-import numpy as np
-import pandas as pd
 import os
 from dotenv import load_dotenv
 
@@ -17,6 +14,9 @@ ml_encoders = None
 def _load_model():
     global ml_model, ml_encoders
     if ml_model is None:
+        import joblib
+        import numpy as np
+        import pandas as pd
         ml_model    = joblib.load('model.pkl')
         ml_encoders = joblib.load('encoders.pkl')
 
@@ -25,6 +25,8 @@ def _safe_enc(le, val):
     return le.transform([s if s in set(le.classes_) else le.classes_[0]])[0]
 
 def predict_price(car):
+    import numpy as np
+    import pandas as pd
     _load_model()
     feature_cols = list(ml_model.feature_names_in_)
     defaults = {'fuel_type': '기타'}
@@ -228,6 +230,8 @@ def car_list():
 
 @app.route('/analysis')
 def analysis():
+    import numpy as np
+    import pandas as pd
     conn = get_db()
     with conn.cursor() as cur:
         # 브랜드별 평균 시세 + 매물 수 (상위 10개)
