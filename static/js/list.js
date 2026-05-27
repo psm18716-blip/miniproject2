@@ -132,6 +132,105 @@ function toggleFavFilter() {
     }
 }
 
+/* ── 차량 비교 ── */
+const compareSet = new Set();
+const compareNames = new Map();
+const COMPARE_KEY = 'carmarket_compare';
+
+function saveCompare() {
+    localStorage.setItem(COMPARE_KEY, JSON.stringify({
+        ids: [...compareSet],
+        names: Object.fromEntries(compareNames)
+    }));
+}
+
+function loadCompare() {
+    try {
+        const data = JSON.parse(localStorage.getItem(COMPARE_KEY) || 'null');
+        if (!data) return;
+        data.ids.forEach(id => compareSet.add(id));
+        Object.entries(data.names).forEach(([id, name]) => compareNames.set(Number(id), name));
+    } catch {}
+}
+
+function toggleCompare(e, carId, btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = btn.closest('.hd-card');
+    if (compareSet.has(carId)) {
+        compareSet.delete(carId);
+        compareNames.delete(carId);
+        btn.classList.remove('checked');
+        card.classList.remove('selected');
+    } else {
+        if (compareSet.size >= 2) return;
+        compareSet.add(carId);
+        const detail = [card.dataset.badge, card.dataset.fuel, card.dataset.year ? card.dataset.year + '년' : '']
+            .filter(v => v && v !== 'None').join(' · ');
+        compareNames.set(carId, { model: card.dataset.model || '차량', detail });
+        btn.classList.add('checked');
+        card.classList.add('selected');
+    }
+    saveCompare();
+    updateCompareBar();
+}
+
+function updateCompareBar() {
+    const bar = document.getElementById('compareBar');
+    document.getElementById('compareCnt').textContent = compareSet.size;
+    bar.classList.toggle('show', compareSet.size >= 1);
+    const center = document.getElementById('compareBarCenter');
+    const entries = [...compareNames.entries()];
+    const item = (id, info) => {
+        const model  = (typeof info === 'object') ? info.model  : info;
+        const detail = (typeof info === 'object') ? info.detail : '';
+        return '<span class="cmp-item">'
+            + '<span class="cmp-chk" onclick="removeCompare(' + id + ')" title="선택 해제">✕</span>'
+            + '<span class="cmp-info">'
+            +   '<span class="cmp-name">' + model + '</span>'
+            +   (detail ? '<span class="cmp-detail">' + detail + '</span>' : '')
+            + '</span>'
+            + '</span>';
+    };
+    if (entries.length === 2) {
+        center.innerHTML = item(entries[0][0], entries[0][1])
+            + '<span class="cmp-vs">vs</span>'
+            + item(entries[1][0], entries[1][1]);
+    } else if (entries.length === 1) {
+        center.innerHTML = item(entries[0][0], entries[0][1])
+            + '<span class="cmp-vs cmp-placeholder">+ 1대 더 선택</span>';
+    } else {
+        center.innerHTML = '';
+    }
+}
+
+function removeCompare(carId) {
+    compareSet.delete(carId);
+    compareNames.delete(carId);
+    const card = document.querySelector('.hd-card[data-id="' + carId + '"]');
+    if (card) {
+        card.classList.remove('selected');
+        const btn = card.querySelector('.compare-chk');
+        if (btn) btn.classList.remove('checked');
+    }
+    saveCompare();
+    updateCompareBar();
+}
+
+function clearCompare() {
+    compareSet.clear();
+    compareNames.clear();
+    saveCompare();
+    document.querySelectorAll('.compare-chk.checked').forEach(b => b.classList.remove('checked'));
+    document.querySelectorAll('.hd-card.selected').forEach(c => c.classList.remove('selected'));
+    updateCompareBar();
+}
+
+function goCompare() {
+    if (compareSet.size < 2) return;
+    location.href = '/compare?ids=' + Array.from(compareSet).join(',');
+}
+
 /* ── 페이지 로드 ── */
 document.addEventListener('DOMContentLoaded', () => {
     const saved = sessionStorage.getItem('listView') || 'l';
@@ -140,16 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const active = document.querySelector('.sb-brand.active');
     if (active) active.scrollIntoView({ block: 'center', behavior: 'instant' });
 
-    /* 비교 상태 복원 */
-    if (typeof loadCompare === 'function') {
-        loadCompare();
-        document.querySelectorAll('.hd-card').forEach(card => {
-            if (compareSet.has(Number(card.dataset.id))) {
-                card.classList.add('selected');
-                const btn = card.querySelector('.compare-chk');
-                if (btn) btn.classList.add('checked');
-            }
-        });
-        updateCompareBar();
-    }
+    loadCompare();
+    document.querySelectorAll('.hd-card').forEach(card => {
+        if (compareSet.has(Number(card.dataset.id))) {
+            card.classList.add('selected');
+            const btn = card.querySelector('.compare-chk');
+            if (btn) btn.classList.add('checked');
+        }
+    });
+    updateCompareBar();
 });

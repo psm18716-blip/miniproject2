@@ -1,0 +1,151 @@
+body { background: #f9fafb; }
+
+.page-wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem 5rem;
+}
+
+/* ── 메인 2단 ── */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+.left-col, .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* ── 사진 ── */
+.photo-box {
+    background: #f0f2f5;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+}
+.photo-box img { width: 100%; height: auto; display: block; }
+.photo-box .no-photo {
+    display: flex; align-items: center; justify-content: center;
+    height: 280px; font-size: 5rem; color: #d1d5db;
+}
+.fuel-badge {
+    position: absolute; top: 14px; left: 14px;
+    background: rgba(15,23,42,.58); color: #e2e8f0;
+    font-size: .7rem; font-weight: 700;
+    padding: 4px 13px; border-radius: 999px;
+    backdrop-filter: blur(6px);
+}
+
+/* ── 차량 정보 ── */
+.info-box { display: flex; flex-direction: column; }
+.car-mfr {
+    font-size: .72rem; font-weight: 700;
+    color: #2563eb; letter-spacing: .06em; margin-bottom: 5px;
+}
+.car-title {
+    font-size: 1.55rem; font-weight: 900;
+    color: #0f172a; letter-spacing: -.5px;
+    line-height: 1.2; margin-bottom: .6rem;
+}
+.car-price {
+    font-size: 2.8rem; font-weight: 900;
+    color: #2563eb; letter-spacing: -.8px;
+    line-height: 1; margin-bottom: .35rem;
+}
+.car-price span { font-size: 1rem; font-weight: 700; color: #9ca3af; margin-left: 5px; }
+
+.ai-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 1.3rem; flex-wrap: wrap;
+}
+.ai-predict-num { font-size: .8rem; color: #6b7280; }
+.cmp-badge {
+    font-size: .74rem; font-weight: 700;
+    padding: .26rem .75rem; border-radius: 99px;
+}
+.cmp-badge.cheap     { background: #dcfce7; color: #16a34a; }
+.cmp-badge.expensive { background: #fef2f2; color: #dc2626; }
+.cmp-badge.same      { background: #f3f4f6; color: #6b7280; }
+
+.divider { height: 1px; background: #f3f4f6; margin-bottom: 1.1rem; }
+
+.spec-table { width: 100%; border-collapse: collapse; }
+.spec-table tr + tr { border-top: 1px solid #f9fafb; }
+.spec-table td { padding: .38rem 0; font-size: .95rem; }
+.spec-table td:first-child { color: #9ca3af; font-weight: 600; width: 90px; }
+.spec-table td:last-child   { color: #111827; font-weight: 700; }
+
+.btn-encar {
+    display: inline-flex; align-items: center; gap: 3px;
+    flex: none;
+    background: #0f172a; color: #fff;
+    padding: .28rem .5rem;
+    border-radius: 8px; font-size: .75rem; font-weight: 700;
+    text-decoration: none; white-space: nowrap;
+    transition: background .15s;
+}
+.btn-encar:hover { background: #1e293b; color: #fff; }
+
+.title-row {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: .9rem;
+    margin-bottom: .6rem;
+}
+
+/* ── 섹션 공통 ── */
+.sec-label {
+    font-size: .66rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: #9ca3af;
+    margin-bottom: .35rem; display: block;
+}
+.sec-title {
+    font-size: 1.2rem; font-weight: 800;
+    color: #111827; margin-bottom: 1.4rem;
+}
+
+/* ── 시세 요약 ── */
+.price-summary {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    margin-top: .6rem; padding-top: .8rem;
+    border-top: 1px solid #f3f4f6; text-align: center;
+}
+.price-summary > div {
+    padding: .5rem 0;
+}
+.price-summary > div:not(:last-child) {
+    border-right: 1px solid #e5e7eb;
+}
+.ps-label { font-size: .75rem; font-weight: 700; color: #9ca3af; margin-bottom: 5px; }
+.ps-val   { font-size: 1.05rem; font-weight: 800; }
+
+/* ── AI 점수 ── */
+.ai-score-wrap {
+    display: flex; align-items: center; gap: 1.3rem;
+    padding-bottom: 1.4rem; margin-bottom: 1.4rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+.ai-score-meta-label { font-size: 1rem; font-weight: 750; color: black; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 3px; }
+.ai-score-text  { font-size: 1.2rem; font-weight: 750; letter-spacing: -.2px; }
+.ai-score-sub   { font-size: .85rem; font-weight: 650; color: #9ca3af; margin-top: 4px; }
+
+.ai-group-label { font-size: .75rem; font-weight: 700; color: #9ca3af; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .85rem; display: block; }
+.ai-check-item {
+    display: flex; align-items: flex-start; gap: 9px;
+    font-size: .95rem; color: #374151; margin-bottom: 10px; font-weight: 550; line-height: 1.5;
+}
+.ai-check-item .ic { font-size: .95rem; flex-shrink: 0; margin-top: 2px; }
+
+/* ── 지역 바 ── */
+.region-wrap { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid #f3f4f6; }
+.region-bar-track {
+    position: relative; height: 6px;
+    background: #f3f4f6; border-radius: 999px; margin: .9rem 0 .7rem;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 860px) {
+    .main-grid { grid-template-columns: 1fr; }
+}

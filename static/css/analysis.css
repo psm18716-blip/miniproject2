@@ -2,6 +2,8 @@
    analysis.css – Dashboard Style
    ============================================= */
 
+@keyframes spin { to { transform: rotate(360deg); } }
+
 body {
   background: #f0f2f7;
 }

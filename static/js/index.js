@@ -51,3 +51,40 @@ function doSearch() {
 document.getElementById('heroSearch').addEventListener('keydown', e => {
     if (e.key === 'Enter') doSearch();
 });
+
+/* ── 캐러셀 ── */
+function createCarousel(trackId, prevId, nextId, barId, textId) {
+    const track = document.getElementById(trackId);
+    if (!track) return () => {};
+    const PER_PAGE = 3;
+    const totalPages = Math.ceil(track.children.length / PER_PAGE);
+    let current = 0;
+    function goTo(page) {
+        current = Math.max(0, Math.min(page, totalPages - 1));
+        const cardW = (track.parentElement.offsetWidth - 28) / 3;
+        track.style.transform = `translateX(-${(cardW + 14) * PER_PAGE * current}px)`;
+        const bar = barId ? document.getElementById(barId) : null;
+        if (bar) bar.style.width = ((current + 1) / totalPages) * 100 + '%';
+        const txt = document.getElementById(textId);
+        if (txt) txt.textContent = current + 1 + ' / ' + totalPages;
+        const cp = document.getElementById(prevId);
+        const cn = document.getElementById(nextId);
+        if (cp) cp.disabled = current === 0;
+        if (cn) cn.disabled = current === totalPages - 1;
+    }
+    function move(dir) { goTo(current + dir); }
+    let startX = 0;
+    track.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; });
+    track.addEventListener('touchend', (e) => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) move(diff > 0 ? 1 : -1);
+    });
+    goTo(0);
+    return move;
+}
+const moveDomestic = createCarousel('carouselTrackDomestic', 'counterPrevDomestic', 'counterNextDomestic', 'progressBarDomestic', 'counterTextDomestic');
+const moveImported  = createCarousel('carouselTrackImported', 'counterPrevImported', 'counterNextImported', 'progressBarImported', 'counterTextImported');
+function moveCarousel(type, dir) {
+    if (type === 'domestic') moveDomestic(dir);
+    if (type === 'imported') moveImported(dir);
+}
