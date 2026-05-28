@@ -295,8 +295,8 @@
             transition:color .15s, transform .15s;
             z-index:10; flex-shrink:0;
         }
-        .like-btn:hover { color:#ef4444; transform:scale(1.2); text-shadow:none; }
-        .like-btn.liked { color:#ef4444; text-shadow:none; }
+        .like-btn:hover { color:#ef4444; transform:scale(1.15); filter:drop-shadow(0 0 2px rgba(239,68,68,.8)); }
+        .like-btn.liked { color:#ef4444; text-shadow:0 0 4px rgba(239,68,68,.3); }
 
         .inner-thumb {
             position:absolute; bottom:8px; right:8px;
@@ -363,6 +363,7 @@
             box-shadow:0 1px 5px rgba(0,0,0,.18);
             z-index:10; color:transparent;
         }
+        .compare-chk:hover { border-color:var(--blue-500); transform:scale(1.15); filter:drop-shadow(0 0 3px rgba(37,99,235,.6)); }
         .compare-chk.checked {
             background:var(--blue-600); border-color:var(--blue-600); color:#fff;
         }
