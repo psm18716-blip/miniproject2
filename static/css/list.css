@@ -455,3 +455,118 @@
             transition:all .15s;
         }
         .compare-clear:hover { color:#fff; border-color:#94a3b8; }
+
+        /* ── 모바일 사이드바 공통 ─────────────────── */
+        .mob-sb-btn { display:none; }
+        .mob-sb-overlay {
+            display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,.45); z-index:199;
+        }
+        .mob-sb-overlay.mob-open { display:block; }
+        .mob-sb-header {
+            display:none; align-items:center;
+            justify-content:space-between;
+            padding:14px 16px;
+            border-bottom:1px solid var(--gray-100);
+            font-size:.9rem; font-weight:800;
+            color:var(--gray-900); flex-shrink:0;
+        }
+        .mob-sb-close {
+            background:none; border:none;
+            font-size:1.1rem; cursor:pointer;
+            color:var(--gray-400); padding:4px 8px;
+        }
+        .mob-no-scroll { overflow:hidden; }
+
+        /* ══════════════════════════════════
+           모바일 (≤768px)
+        ══════════════════════════════════ */
+        @media (max-width: 768px) {
+
+            /* 사이드바 — 왼쪽 슬라이드 인 */
+            .left-sb {
+                position:fixed; top:0; left:0;
+                width:82vw; max-width:300px;
+                height:100dvh; z-index:200;
+                transform:translateX(-100%);
+                transition:transform .28s ease;
+                border-right:1px solid var(--gray-200);
+            }
+            .left-sb.mob-open { transform:translateX(0); }
+
+            .mob-sb-header { display:flex; }
+
+            /* 네비 브랜드 버튼 표시 */
+            .mob-sb-btn {
+                display:flex; align-items:center; gap:4px;
+                background:var(--gray-100); border:none;
+                border-radius:999px; padding:6px 11px;
+                font-size:.72rem; font-weight:700;
+                color:var(--gray-700); cursor:pointer;
+                white-space:nowrap; flex-shrink:0;
+            }
+
+            /* 레이아웃 — 사이드바 공간 제거 */
+            .page-wrap { display:block; }
+            .main-area { min-width:0; width:100%; }
+
+            /* 필터 바 */
+            .filter-bar { padding:8px .75rem; top:60px; }
+            .filter-bar-inner { gap:5px; }
+            .filter-pill { padding:5px 10px; font-size:.78rem; }
+            .filter-btn-all { padding:5px 11px; font-size:.78rem; }
+
+            /* 결과 바 */
+            .result-bar { padding:8px .75rem 6px; flex-wrap:wrap; gap:6px; }
+            .result-brand-label { position:static; transform:none; order:-1; width:100%; }
+            .result-brand-name { font-size:1rem; }
+            .result-model-name { font-size:1rem; }
+            .result-left { gap:6px; }
+            .result-cnt { font-size:.88rem; }
+
+            /* 그리드 뷰 — 2열 */
+            .car-grid { grid-template-columns:1fr 1fr !important; gap:10px; padding:10px .75rem 0; }
+            .hd-img { height:150px; }
+
+            /* 리스트 뷰 */
+            .car-grid.list-view { padding:8px .75rem 0; gap:5px; max-width:100%; }
+            .car-grid.list-view .hd-card { flex-direction:row; }
+            .car-grid.list-view .hd-img { width:130px; height:110px; }
+            .car-grid.list-view .hd-body { padding:10px 12px; }
+            .car-grid.list-view .hd-model { font-size:.85rem; }
+            .car-grid.list-view .hd-price { font-size:.9rem; }
+
+            /* 하트/체크 버튼 — 카드 크기에 맞게 */
+            .like-btn { width:30px; height:30px; font-size:1rem; top:6px; right:6px; }
+            .compare-chk { width:22px; height:22px; top:6px; right:40px; }
+
+            /* 찜 플로팅 버튼 */
+            .fav-float { top:auto; bottom:80px; transform:none; }
+
+            /* 비교 바 */
+            .compare-bar { padding:10px 1rem; flex-wrap:wrap; gap:8px; }
+            .compare-bar-center { position:static; transform:none; width:100%; justify-content:center; }
+            .compare-bar-info { font-size:.8rem; }
+            .cmp-name { font-size:.82rem; }
+            .cmp-detail { display:none; }
+
+            /* 페이지네이션 */
+            .pagination { gap:3px; }
+            .page-link { padding:.35rem .6rem; font-size:.8rem; }
+
+            /* 뷰 버튼 */
+            .view-btns { gap:2px; }
+            .vbtn { padding:5px 8px; font-size:.85rem; }
+
+            /* 정렬 */
+            .sort-select { font-size:.78rem; padding:5px 8px; }
+        }
+
+        @media (max-width: 480px) {
+            /* 초소형 — 카드 1열 */
+            .car-grid { grid-template-columns:1fr !important; }
+            .hero-title { font-size:1.6rem; }
+
+            /* 탭 그룹 숨기고 아이콘만 */
+            .nav-tab { padding:5px 6px; font-size:.68rem; }
+        }

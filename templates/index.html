@@ -28,7 +28,11 @@
         <a href="/analysis" class="nav-tab">📊 시세분석</a>
         <a href="/predict" class="nav-tab">🤖 AI 예측</a>
       </div>
+      <button class="mob-brand-btn" onclick="toggleMobSidebar()">🏷️ 브랜드</button>
     </nav>
+
+    <!-- 모바일 사이드바 오버레이 -->
+    <div class="mob-sb-overlay" id="mobSbOverlay" onclick="toggleMobSidebar()"></div>
 
     <!-- 마키 배너 -->
     <div class="banner">
@@ -37,7 +41,11 @@
 
     <div class="page-layout">
       <!-- 사이드바 -->
-      <aside class="left-sb">
+      <aside class="left-sb" id="leftSb">
+        <div class="mob-sb-header">
+          <span>브랜드 · 모델</span>
+          <button class="mob-sb-close" onclick="toggleMobSidebar()">✕</button>
+        </div>
         <div class="promo-card">
           <div class="promo-inner">
             <p>실시간 데이터</p>
@@ -101,6 +109,13 @@
               '북기은상':          'bukgi.png',
               '미쯔오까':           'mizzi.png',
               '동풍소콘':       'dongfeng.png',
+              '미쓰비시':         'mitsubishi.png',
+              '미쯔비시':         'mitsubishi.png',
+              '어큐라':           'acura.png',
+              '사이언':           'scion.png',
+              '알파로메오':       'alfaromeo.png',
+              '알파 로메오':      'alfaromeo.png',
+              '신위안':           'swm.png',
               '기타 제조사':      'guitar.png',
               '기타 수입차':      'guitar.png'
           } %}
@@ -323,5 +338,14 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script>
+    function toggleMobSidebar() {
+        const sb = document.getElementById('leftSb');
+        const ov = document.getElementById('mobSbOverlay');
+        sb.classList.toggle('mob-open');
+        ov.classList.toggle('mob-open');
+        document.body.classList.toggle('mob-no-scroll');
+    }
+    </script>
   </body>
 </html>

@@ -149,3 +149,51 @@ body { background: #f9fafb; }
 @media (max-width: 860px) {
     .main-grid { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 768px) {
+    .page-wrap { padding: 1rem 1rem 3rem; }
+
+    /* 페이지 헤더 — 긴 모델명 줄 바꿈 처리 */
+    .page-hdr { flex-wrap: wrap !important; gap: 4px 8px !important; }
+    .page-hdr .page-subtitle {
+        flex-basis: 100%; padding-left: 28px;
+        font-size: .78rem; color: #9ca3af;
+        margin: 0 !important;
+    }
+    .page-hdr .page-title { font-size: 1.15rem; }
+
+    /* 차량 가격 */
+    .car-price { font-size: 2rem; }
+
+    /* 2단 → 1단 (이미 860px에서 처리되지만 패딩 보정) */
+    .main-grid { gap: 1.5rem; }
+
+    /* 섹션 타이틀 */
+    .sec-title { font-size: 1rem; margin-bottom: 1rem; }
+
+    /* 시세 요약 3칸 */
+    .ps-label { font-size: .7rem; }
+    .ps-val   { font-size: .95rem; }
+
+    /* AI 점수 영역 */
+    .ai-score-wrap { gap: 1rem; }
+    .ai-score-meta-label { font-size: .9rem; }
+    .ai-score-text { font-size: 1rem; }
+    .ai-score-sub  { font-size: .78rem; }
+    .ai-check-item { font-size: .88rem; }
+
+    /* 스펙 테이블 */
+    .spec-table td { font-size: .88rem; }
+}
+
+@media (max-width: 480px) {
+    .page-wrap { padding: .75rem .75rem 2rem; }
+    .car-price { font-size: 1.75rem; }
+
+    /* AI 점수 — SVG + 텍스트 세로 정렬 */
+    .ai-score-wrap { flex-direction: column; align-items: flex-start; }
+
+    /* 가격 요약 글자 더 줄이기 */
+    .ps-label { font-size: .65rem; }
+    .ps-val   { font-size: .88rem; }
+}

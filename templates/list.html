@@ -20,15 +20,23 @@
         <a href="/analysis" class="nav-tab">📊 시세분석</a>
         <a href="/predict" class="nav-tab">🤖 AI 예측</a>
     </div>
+    <button class="mob-sb-btn" onclick="toggleListSb()">☰ 브랜드</button>
 </nav>
 
 <!-- ── 투명 드롭다운 dimmer ──────────────────── -->
 <div class="drop-dimmer" id="dropDimmer" onclick="closeAllDrops()"></div>
 
+<!-- ── 모바일 사이드바 오버레이 ──────────────── -->
+<div class="mob-sb-overlay" id="mobSbOverlay" onclick="toggleListSb()"></div>
+
 <div class="page-wrap">
 
     <!-- ── 왼쪽 사이드바 ──────────────────────── -->
-    <aside class="left-sb">
+    <aside class="left-sb" id="listSb">
+        <div class="mob-sb-header">
+            <span>{% if manufacturer %}{{ manufacturer }}{% else %}브랜드 · 모델{% endif %}</span>
+            <button class="mob-sb-close" onclick="toggleListSb()">✕</button>
+        </div>
 
         {% if manufacturer and models %}
         <!-- ── 차종 목록 (브랜드 선택 시) ── -->
@@ -456,6 +464,14 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/list.js') }}?v=5"></script>
-
+<script>
+function toggleListSb() {
+    const sb = document.getElementById('listSb');
+    const ov = document.getElementById('mobSbOverlay');
+    sb.classList.toggle('mob-open');
+    ov.classList.toggle('mob-open');
+    document.body.classList.toggle('mob-no-scroll');
+}
+</script>
 </body>
 </html>

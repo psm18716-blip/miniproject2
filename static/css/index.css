@@ -535,3 +535,101 @@ body {
   font-weight: 400;
   color: var(--gray-300);
 }
+
+/* ── 모바일 사이드바 토글 버튼 ── */
+.mob-brand-btn {
+  display: none;
+}
+
+/* ── 모바일 사이드바 헤더 ── */
+.mob-sb-header {
+  display: none;
+}
+
+/* ── 모바일 오버레이 ── */
+.mob-sb-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 199;
+}
+.mob-sb-overlay.mob-open { display: block; }
+.mob-no-scroll { overflow: hidden; }
+
+/* ══════════════════════════════════════
+   모바일 (≤768px)
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  body { zoom: 1; }
+
+  /* 사이드바 — 왼쪽에서 슬라이드 인 */
+  .left-sb {
+    position: fixed; top: 0; left: 0;
+    width: 280px; height: 100dvh;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    border-right: 1px solid var(--gray-200);
+  }
+  .left-sb.mob-open { transform: translateX(0); }
+
+  /* 사이드바 헤더 (닫기 버튼) */
+  .mob-sb-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: .9rem; font-weight: 800;
+    color: var(--gray-900); flex-shrink: 0;
+  }
+  .mob-sb-close {
+    background: none; border: none;
+    font-size: 1.1rem; cursor: pointer;
+    color: var(--gray-400); padding: 4px 8px;
+  }
+
+  /* 네비 — 브랜드 버튼 표시, 탭 그룹 축소 */
+  .mob-brand-btn {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--gray-100); border: none;
+    border-radius: 999px; padding: 6px 12px;
+    font-size: .78rem; font-weight: 700;
+    color: var(--gray-700); cursor: pointer;
+    white-space: nowrap; flex-shrink: 0;
+  }
+
+  /* 탭 텍스트 축소 */
+  .nav-tab { padding: 5px 8px; font-size: .72rem; }
+  .nav-tab-group { gap: 2px; padding: 3px; }
+
+  /* 레이아웃 — 사이드바 공간 제거 */
+  .page-layout { display: block; }
+
+  /* 히어로 */
+  .search-hero { padding: 1.8rem 1.2rem 1.6rem; }
+  .hero-title { font-size: 2.1rem; }
+  .searchbar { max-width: 100%; }
+
+  /* 통계 바 — 2열 그리드 */
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr; }
+  .stat { border-right: none; border-bottom: 1px solid var(--gray-200); }
+  .stat:nth-child(odd) { border-right: 1px solid var(--gray-200); }
+  .stat:last-child, .stat:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  .stat-n { font-size: 1.2rem; }
+  .stat-l { font-size: .8rem; }
+
+  /* 콘텐츠 패딩 */
+  .content { padding: 1.2rem 1rem 2rem; }
+  .sec-title { font-size: 1.2rem; }
+
+  /* 캐러셀 — 1.3장 보이게 */
+  .carousel-track {
+    grid-template-columns: repeat(15, calc(100% / 1.3 - 8px));
+    gap: 10px;
+  }
+  .car-thumb { height: 190px; }
+
+  /* 프로모 카드 */
+  .promo-card { height: 90px; }
+}
