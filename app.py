@@ -11,12 +11,23 @@ app = Flask(__name__)
 ml_model    = None
 ml_encoders = None
 
+def _download_models():
+    import urllib.request
+    files = {
+        'model.pkl':    'https://github.com/psm18716-blip/miniproject2/releases/download/v1.0/model.pkl',
+        'encoders.pkl': 'https://github.com/psm18716-blip/miniproject2/releases/download/v1.0/encoders.pkl',
+    }
+    for fname, url in files.items():
+        if not os.path.exists(fname):
+            print(f'Downloading {fname}...', flush=True)
+            urllib.request.urlretrieve(url, fname)
+            print(f'{fname} downloaded.', flush=True)
+
 def _load_model():
     global ml_model, ml_encoders
     if ml_model is None:
+        _download_models()
         import joblib
-        import numpy as np
-        import pandas as pd
         ml_model    = joblib.load('model.pkl')
         ml_encoders = joblib.load('encoders.pkl')
 
